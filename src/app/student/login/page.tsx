@@ -1,19 +1,63 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import React from "react";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import AlertModal from "@/components/AlertModal";
+import { formatApiErrorMessage, voterRequestOtp } from "@/lib/api-client";
+
+// For demo/implementation purposes, we'll use a constant.
+// In a real app, this might come from the URL or a config.
+const ASSOCIATION_PUBLIK_ID = "DEMO-ASSOC";
 
 export default function StudentLogin() {
-  const [matricError, setMatricError] = useState(true);
+  const [name, setName] = useState("");
+  const [matricNo, setMatricNo] = useState("");
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [matricError, setMatricError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [alert, setAlert] = useState<{ message: string; type: "error" | "warning" } | null>(null);
+  const router = useRouter();
+
+  const handleAuthenticate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMatricError(false);
+    setErrorMessage("");
+
+    try {
+      const result = await voterRequestOtp(ASSOCIATION_PUBLIK_ID, {
+        name,
+        matric_no: matricNo,
+        email,
+        whatsapp_number: "0000000000",
+      });
+
+      if (result.status === "success") {
+        router.push(`/student/verify?email=${email}&matric=${matricNo}`);
+      } else {
+        setMatricError(true);
+        setErrorMessage(
+          formatApiErrorMessage(
+            { message: result.message, errors: result.errors },
+            "You are not eligible to participate in this election"
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setAlert({ message: "An error occurred. Please try again.", type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-zinc-900 p-6">
-      {/* Centered White Card */}
       <div className="w-full max-w-[480px] bg-white rounded-3xl p-10 md:p-14 border border-zinc-100 shadow-[0_15px_50px_-15px_rgba(0,0,0,0.05)] relative">
-        
-        {/* Branding */}
+
         <div className="flex flex-col items-center mb-12 text-center">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-[#243160] flex items-center justify-center shadow-lg">
@@ -23,7 +67,7 @@ export default function StudentLogin() {
             </div>
             <span className="text-xl font-black text-[#243160] tracking-tighter">VOTERIX</span>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 tracking-[0.2em] uppercase mb-2">
+          <p className="text-xs font-bold text-slate-500 tracking-[0.2em] uppercase mb-2">
             National Association of Computing Students
           </p>
           <h1 className="text-4xl font-black text-[#101828] tracking-tight">
@@ -31,16 +75,18 @@ export default function StudentLogin() {
           </h1>
         </div>
 
-        {/* Form fields */}
-        <form className="space-y-6">
-          
+        <form className="space-y-6" onSubmit={handleAuthenticate}>
+
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-[0.1em] text-zinc-500">
               Name
             </label>
             <input
               type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Surname - Firstname"
+              required
               className="w-full h-12 px-5 rounded-xl border border-zinc-200 bg-white text-gray-900 text-sm font-semibold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/10 focus:border-[#3457B4] transition-all"
             />
           </div>
@@ -52,10 +98,13 @@ export default function StudentLogin() {
             <div className="relative">
               <input
                 type="text"
-                defaultValue="BU22CSC1087"
+                value={matricNo}
+                onChange={(e) => setMatricNo(e.target.value)}
+                required
+                placeholder="BU22CSC1087"
                 className={`w-full h-12 px-5 rounded-xl border bg-white text-gray-900 text-sm font-semibold focus:outline-none transition-all pr-12 ${
-                  matricError 
-                    ? "border-red-500 focus:ring-4 focus:ring-red-500/10 placeholder:text-red-200" 
+                  matricError
+                    ? "border-red-500 focus:ring-4 focus:ring-red-500/10 placeholder:text-red-200"
                     : "border-zinc-200 focus:ring-4 focus:ring-[#3457B4]/10 focus:border-[#3457B4]"
                 }`}
               />
@@ -66,9 +115,9 @@ export default function StudentLogin() {
               )}
             </div>
             {matricError && (
-              <p className="text-[11px] text-red-500 font-bold mt-1.5 flex items-center gap-1.5">
+              <p className="text-xs text-red-500 font-bold mt-1.5 flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-red-500"></span>
-                You are not eligible to participate in this election
+                {errorMessage}
               </p>
             )}
           </div>
@@ -79,39 +128,38 @@ export default function StudentLogin() {
             </label>
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               placeholder="abc@email.com"
               className="w-full h-12 px-5 rounded-xl border border-zinc-200 bg-white text-gray-900 text-sm font-semibold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/10 focus:border-[#3457B4] transition-all"
             />
           </div>
 
-          <div className="pt-2 flex items-center">
-            <input 
-              type="checkbox" 
-              id="remember" 
-              className="w-4 h-4 rounded border-zinc-300 text-[#3457B4] focus:ring-[#3457B4]"
-              defaultChecked
-            />
-            <label htmlFor="remember" className="ml-3 text-sm text-zinc-600 font-bold">
-              Remember me
-            </label>
-          </div>
-
           <div className="pt-6">
             <button
-              type="button"
-              className="w-full h-14 font-black uppercase tracking-[0.2em] text-[13px] text-white transition-all hover:opacity-95 active:scale-[0.98]"
+              type="submit"
+              disabled={isLoading}
+              className={`w-full h-14 font-black uppercase tracking-[0.2em] text-sm text-white transition-all hover:opacity-95 active:scale-[0.98] ${isLoading ? 'opacity-70' : ''}`}
               style={{
                 borderRadius: '16px',
                 background: 'linear-gradient(180deg, #3457B4 0%, #243160 100%)',
                 boxShadow: '0 10px 25px -5px rgba(52, 87, 180, 0.4)'
               }}
             >
-              Authenticate
+              {isLoading ? "Authenticating..." : "Authenticate"}
             </button>
           </div>
         </form>
-
       </div>
+
+      <AlertModal
+        isOpen={!!alert}
+        onClose={() => setAlert(null)}
+        message={alert?.message || ""}
+        type={alert?.type}
+      />
     </div>
   );
 }
+

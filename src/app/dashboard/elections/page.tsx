@@ -1,28 +1,58 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, ArrowUpDown, Plus, MoreHorizontal } from "lucide-react";
 import EditElectionModal from "@/components/EditElectionModal";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api-client";
 
 export default function ElectionsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedElection, setSelectedElection] = useState<any>(null);
-  
-  const [elections] = useState([
-    {
-      id: 1,
-      name: "NACOS 25/26",
-      initials: "NA",
-      date: "27/05/26",
-      startTime: "12:00 AM",
-      endTime: "5:00 PM",
-      status: "Pending",
-    },
-  ]);
+  const [elections, setElections] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { accessToken } = useAuth();
 
-  // For UI demonstration, we can toggle this
+  const fetchElections = async () => {
+    try {
+      const result = await apiFetch<any>("/election/");
+      if (result.status === "success") {
+        const formattedElections = result.data.map((el: any) => ({
+          id: el.uid,
+          uid: el.uid,
+          publik_id: el.publik_id,
+          name: el.title,
+          initials: el.title.substring(0, 2).toUpperCase(),
+          date: new Date(el.start_time).toLocaleDateString(),
+          startTime: new Date(el.start_time).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          endTime: new Date(el.end_time).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          start_time: el.start_time,
+          end_time: el.end_time,
+          status: `${el.status.charAt(0).toUpperCase()}${el.status.slice(1)}`,
+        }));
+        setElections(formattedElections);
+      }
+    } catch (error) {
+      console.error("Failed to fetch elections", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchElections();
+    }
+  }, [accessToken]);
+
   const isEmpty = elections.length === 0;
 
   const handleEdit = (election: any) => {
@@ -84,7 +114,7 @@ export default function ElectionsPage() {
             <h3 className="text-gray-900 text-base md:text-lg font-semibold mb-2 tracking-tight">
               No Election created at this time
             </h3>
-            <p className="text-gray-500 font-medium max-w-[280px] leading-relaxed mb-6 md:mb-8 text-[11px] md:text-xs">
+            <p className="text-gray-500 font-medium max-w-[280px] leading-relaxed mb-6 md:mb-8 text-xs">
               Create election for your institution to see election here
             </p>
 
@@ -109,21 +139,21 @@ export default function ElectionsPage() {
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900">{election.name}</h3>
-                        <p className="text-[11px] text-gray-500 font-medium mt-0.5">{election.date}</p>
+                        <p className="text-xs text-gray-500 font-medium mt-0.5">{election.date}</p>
                       </div>
                     </div>
-                    <span className="rounded-full bg-[#FFFAF0] px-2.5 py-1 text-[11px] font-semibold text-[#FE9431] border border-[#FE9431]/20">
+                    <span className="rounded-full bg-[#FFFAF0] px-2.5 py-1 text-xs font-semibold text-[#FE9431] border border-[#FE9431]/20">
                       {election.status}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 py-1">
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Start Time</p>
+                      <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Start Time</p>
                       <p className="mt-1 text-xs font-semibold text-gray-700">{election.startTime}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">End Time</p>
+                      <p className="text-xs font-medium uppercase tracking-wider text-gray-400">End Time</p>
                       <p className="mt-1 text-xs font-semibold text-gray-700">{election.endTime}</p>
                     </div>
                   </div>
@@ -165,7 +195,7 @@ export default function ElectionsPage() {
                     <tr key={election.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-[10px]">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
                             {election.initials}
                           </div>
                           <span className="font-semibold text-gray-900 text-sm">{election.name}</span>
@@ -175,7 +205,7 @@ export default function ElectionsPage() {
                       <td className="px-6 py-3.5 text-sm font-medium text-gray-600">{election.startTime}</td>
                       <td className="px-6 py-3.5 text-sm font-medium text-gray-600">{election.endTime}</td>
                       <td className="px-6 py-3.5">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FFFAF0] text-[#FE9431] border border-[#FFFAF0]">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FFFAF0] text-[#FE9431] border border-[#FFFAF0]">
                           {election.status}
                         </span>
                       </td>
@@ -200,7 +230,9 @@ export default function ElectionsPage() {
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         election={selectedElection}
+        onSaved={fetchElections}
       />
     </div>
   );
 }
+

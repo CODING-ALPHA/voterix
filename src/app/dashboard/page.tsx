@@ -1,45 +1,110 @@
+"use client";
+
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api-client";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 
 export default function AdminDashboard() {
-  const stats = [
+  const { user, accessToken } = useAuth();
+  const firstName = user?.name?.trim().split(/\s+/)[0] || "Admin";
+  const getPercentValue = (value: string) => {
+    const parsed = Number.parseFloat(value.replace("%", "").trim());
+    if (!Number.isFinite(parsed)) return 0;
+    return Math.min(100, Math.max(0, parsed));
+  };
+  const [stats, setStats] = useState([
     { title: "Election Created", value: "0", percentage: "0" },
     { title: "Election completed", value: "0", percentage: "0%" },
     { title: "Total Students", value: "0", percentage: "0%" },
     { title: "Voters", value: "0", percentage: "0%" },
-  ];
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!accessToken) return;
+      try {
+        const result = await apiFetch<any>("/dashboard/admin/");
+        if (result.status === "success") {
+          const metrics = result.data?.metrics ?? result.data ?? {};
+          const total = Number(metrics.total_elections ?? metrics.elections_created ?? 0);
+          const completed = Number(metrics.completed_elections ?? metrics.elections_completed ?? 0);
+          const totalStudents = Number(metrics.total_students ?? metrics.students_total ?? 0);
+          const totalVoters = Number(metrics.total_voters ?? metrics.voters_total ?? totalStudents ?? 0);
+          const verifiedVoters = Number(metrics.verified_voters ?? metrics.voters_verified ?? 0);
+
+          setStats(prev => [
+            { ...prev[0], value: total.toString() },
+            { ...prev[1], value: completed.toString(), percentage: total > 0 ? `${Math.round((completed/total)*100)}%` : "0%" },
+            {
+              title: "Total Students",
+              value: totalStudents.toString(),
+              percentage: totalStudents > 0 && totalVoters > 0 ? `${Math.round((totalVoters / totalStudents) * 100)}%` : "0%",
+            },
+            {
+              title: "Voters",
+              value: totalVoters.toString(),
+              percentage: totalVoters > 0 ? `${Math.round((verifiedVoters / totalVoters) * 100)}%` : "0%",
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Stats fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, [accessToken]);
 
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
       <div>
         <h1 className="text-lg md:text-xl font-semibold text-gray-900 mb-0.5">Dashboard</h1>
-        <p className="text-gray-500 text-[11px] md:text-xs font-medium">
-          Welcome to Learning Management Dashboard.
+        <p className="text-gray-500 text-xs font-medium">
+          Welcome <span className="text-[#3457B4] font-bold text-xs">{firstName}</span>, manage your elections here.
         </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between border border-gray-50">
-            <h3 className="text-gray-500 text-[11px] font-semibold uppercase tracking-wider mb-3 opacity-80">{stat.title}</h3>
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold text-gray-900 leading-none">{stat.value}</span>
-              <div className="relative w-10 h-10 flex items-center justify-center rounded-full border-[2.5px] border-zinc-100">
-                {/* Circular indicator */}
-                {stat.percentage !== "0" && (
-                  <svg className="absolute inset-0 w-full h-full overflow-visible transform -rotate-90">
-                    <circle cx="18" cy="18" r="18" fill="none" stroke="#DFE2EE" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="18" fill="none" stroke="#A7C3F8" strokeWidth="3" strokeDasharray="113" strokeDashoffset="108" className="opacity-80" />
+        {stats.map((stat, i) => {
+          const percentValue = getPercentValue(stat.percentage);
+          const radius = 16;
+          const circumference = 2 * Math.PI * radius;
+          const dashOffset = circumference - (percentValue / 100) * circumference;
+
+          return (
+            <div key={i} className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between border border-gray-50">
+              <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-3 opacity-80">{stat.title}</h3>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-gray-900 leading-none">{stat.value}</span>
+                <div className="relative w-10 h-10 flex items-center justify-center rounded-full">
+                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r={radius} fill="none" stroke="#DFE2EE" strokeWidth="3" />
+                    <circle
+                      cx="20"
+                      cy="20"
+                      r={radius}
+                      fill="none"
+                      stroke="#A7C3F8"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={dashOffset}
+                      className="transition-all duration-500 ease-out"
+                    />
                   </svg>
-                )}
-                <span className="text-[10px] font-bold text-gray-700 z-10">{stat.percentage}</span>
+                  <span className="text-[10px] font-semibold text-gray-700 z-10">{stat.percentage}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Main Empty State Content */}
@@ -80,3 +145,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

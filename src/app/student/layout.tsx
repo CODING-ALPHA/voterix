@@ -16,11 +16,22 @@ import {
   Menu,
   X as CloseIcon
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
+
+  const getInitials = (name?: string) => {
+    return name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2) || "ST";
+  };
 
   const navItems = [
     { name: "Dashboard", href: "/student", icon: LayoutDashboard },
@@ -78,7 +89,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                }`}
              >
                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-[#243160]" : "text-white/90"} />
-               <span className="text-[14px] uppercase tracking-wide">{item.name}</span>
+               <span className="text-sm uppercase tracking-wide">{item.name}</span>
              </Link>
             );
           })}
@@ -124,11 +135,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                 className="flex items-center gap-3 pl-3 md:pl-4 border-l border-zinc-100 hover:opacity-80 transition-opacity focus:outline-none"
               >
                 <div className="w-8 h-8 rounded-full bg-[#3457B4] flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                  OO
+                  {getInitials(user?.name) || "OO"}
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
-                  <span className="font-bold text-[#FF4D4C] text-[10px] uppercase tracking-wider">Student</span>
-                  <span className="font-semibold text-gray-900 text-sm">Ojedokun Olaniyi</span>
+                  <span className="font-bold text-[#FF4D4C] text-[0.7rem] uppercase tracking-wider">Student</span>
+                  <span className="font-medium text-gray-900 text-xs">{user?.name || "Ojedokun Olaniyi"}</span>
                 </div>
                 <ChevronDown size={16} className={`text-zinc-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -151,7 +162,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                     <div className="h-px bg-zinc-100 my-1"></div>
                     <button 
                       className="w-full h-10 flex items-center gap-3 px-4 text-sm font-medium text-[#FF4D4C] hover:bg-red-50 transition-colors"
-                      onClick={() => setIsProfileMenuOpen(false)}
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        logout();
+                      }}
                     >
                       <LogOut size={18} strokeWidth={2} />
                       <span>Logout</span>
@@ -169,7 +183,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             {children}
           </div>
           <footer className="py-6 px-8 flex justify-center items-center">
-            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-widest">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">
               voterix &copy; 2025
             </span>
           </footer>
@@ -178,3 +192,4 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     </div>
   );
 }
+

@@ -1,33 +1,73 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import VerificationCodeModal from "@/components/VerificationCodeModal";
 import VerifyingModal from "@/components/VerifyingModal";
 import SuccessModal from "@/components/SuccessModal";
 import AuthImageSlider from "@/components/AuthImageSlider";
+import { formatApiErrorMessage, register as registerAssociation } from "@/lib/api-client";
 
 export default function Register() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isVerifyingOpen, setIsVerifyingOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsVerifyingOpen(true);
-    setTimeout(() => {
-      setIsVerifyingOpen(false);
-      setIsCodeModalOpen(true);
-    }, 2000);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (formError) setFormError(null);
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    if (formData.password !== formData.confirmPassword) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+
+    setIsVerifyingOpen(true);
+
+    try {
+      const result = await registerAssociation({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+      });
+
+      if (result.status === "success") {
+        setIsVerifyingOpen(false);
+        setIsCodeModalOpen(true);
+      } else {
+        setIsVerifyingOpen(false);
+        setFormError(
+          formatApiErrorMessage(
+            { message: result.message, errors: result.errors },
+            "Registration failed"
+          )
+        );
+      }
+    } catch (error) {
+      setIsVerifyingOpen(false);
+      console.error("Registration error:", error);
+      setFormError("An error occurred. Please try again.");
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Left Side: Form */}
       <div className="flex w-full flex-col justify-center px-8 lg:w-1/2 lg:px-24 bg-white text-zinc-900">
         <div className="mb-12">
-          {/* Logo */}
-
           <h1 className="text-3xl font-bold text-[#000a33] mb-8">Registration</h1>
 
           <form className="space-y-4" onSubmit={handleRegister}>
@@ -37,17 +77,24 @@ export default function Register() {
               </label>
               <input
                 type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
                 placeholder="e.g NACOS BOWEN"
                 className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-white text-gray-900 text-sm font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 letter-spacing-wide">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Email
               </label>
               <input
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
                 placeholder="olivia@untitledui.com"
                 className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-white text-gray-900 text-sm font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
@@ -59,6 +106,10 @@ export default function Register() {
               </label>
               <input
                 type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
                 placeholder="BU22CVT2222"
                 className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-white text-gray-900 text-sm font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
@@ -70,10 +121,23 @@ export default function Register() {
               </label>
               <input
                 type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
                 placeholder="BU22CVT2222"
                 className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-white text-gray-900 text-sm font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
+
+            {formError && (
+              <p
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700"
+              >
+                {formError}
+              </p>
+            )}
 
             <div className="pt-2">
               <button
@@ -99,30 +163,31 @@ export default function Register() {
         </div>
 
         {/* Modal Components */}
-        <VerificationCodeModal 
-          isOpen={isCodeModalOpen} 
+        <VerificationCodeModal
+          isOpen={isCodeModalOpen}
           onClose={() => setIsCodeModalOpen(false)}
-          onVerify={(code) => {
-            console.log("Verifying code:", code);
+          email={formData.email}
+          purpose="signup"
+          onVerify={() => {
             setIsCodeModalOpen(false);
             setIsSuccessModalOpen(true);
           }}
         />
         <VerifyingModal isOpen={isVerifyingOpen} />
-        <SuccessModal 
-          isOpen={isSuccessModalOpen} 
+        <SuccessModal
+          isOpen={isSuccessModalOpen}
           onDashboard={() => {
-            console.log("Navigating to dashboard...");
             setIsSuccessModalOpen(false);
-          }} 
+            router.push('/login');
+          }}
         />
       </div>
 
       {/* Right Side: Visual */}
       <div className="hidden w-1/2 bg-[#000129] lg:flex flex-col justify-center p-16 text-white">
-        <AuthImageSlider 
-          title="Quick Set-up" 
-          subtitle="Creating an election should not be a sport, it should be easy, smooth and understandable. Voterix is here to provide that." 
+        <AuthImageSlider
+          title="Quick Set-up"
+          subtitle="Creating an election should not be a sport, it should be easy, smooth and understandable. Voterix is here to provide that."
         />
       </div>
     </div>

@@ -22,10 +22,11 @@ export default function VerifyingModal({ isOpen }: VerifyingModalProps) {
         </div>
 
         <div className="mt-10 text-center">
-          <h2 className="text-[28px] font-bold text-black mb-3">Verifying.....</h2>
+          <h2 className="text-3xl font-bold text-black mb-3">Verifying.....</h2>
           <p className="text-black text-lg font-normal">Please, wait a few moments</p>
         </div>
       </div>
     </div>
   );
 }
+

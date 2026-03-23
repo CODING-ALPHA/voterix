@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { Star, Calendar, ChevronDown } from "lucide-react";
 
 export default function NotificationsPage() {
-  // Toggle this state to see the empty view
+  // Backend notifications endpoints are not implemented yet, so this page is local mock data for now.
+  // Toggle this state to see the empty view.
   const [notifications, setNotifications] = useState([
     { id: 1, title: "Voterix", message: "SUCCESSFUL: You have successfully created an Election. Please click on the link below to c...", time: "5:00 PM", isRead: true },
     { id: 2, title: "Voterix", message: "SUCCESSFUL: You have successfully created an Election. Please click on the link below to c...", time: "5:00 PM", isRead: false },

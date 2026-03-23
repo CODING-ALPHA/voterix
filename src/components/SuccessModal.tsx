@@ -23,8 +23,8 @@ export default function SuccessModal({ isOpen, onDashboard }: SuccessModalProps)
         </div>
 
         <div className="mt-12 text-center flex flex-col items-center w-full">
-          <h2 className="text-[32px] font-bold text-black mb-4">Done!</h2>
-          <p className="text-black text-[20px] font-normal mb-8">You have successfully created your account</p>
+          <h2 className="text-4xl font-bold text-black mb-4">Done!</h2>
+          <p className="text-black text-xl font-normal mb-8">You have successfully created your account</p>
           
           <button
             onClick={onDashboard}
@@ -43,3 +43,4 @@ export default function SuccessModal({ isOpen, onDashboard }: SuccessModalProps)
     </div>
   );
 }
+

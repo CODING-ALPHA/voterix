@@ -1,47 +1,148 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
+import AlertModal from "@/components/AlertModal";
+import { PinModal } from "@/components/AlertModal";
+import { apiFetch, formatApiErrorMessage, voterFetch } from "@/lib/api-client";
 
 export default function StudentElection() {
-  const [selectedCandidates, setSelectedCandidates] = useState<Record<string, string>>({});
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const handleSelect = (position: string, candidateId: string) => {
+  const electionId = searchParams.get("id") || "DEMO-ELECTION";
+  const voterUid = searchParams.get("voter_uid") || "";
+  const queryToken = searchParams.get("token") || searchParams.get("session_token") || "";
+  const matricNumber = searchParams.get("matric_number") || searchParams.get("matric_no") || "";
+
+  const [positions, setPositions] = useState<any[]>([]);
+  const [selectedCandidates, setSelectedCandidates] = useState<Record<string, number | string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [alert, setAlert] = useState<{ message: string; type: "error" | "success" | "warning" | "info" } | null>(null);
+
+  useEffect(() => {
+    const fetchBallot = async () => {
+      try {
+        const result = await apiFetch<any>(`/election/live-preview/${electionId}/`);
+        if (result.status === "success") {
+          setPositions(result.data.positions);
+        }
+      } catch (error) {
+        console.error("Fetch ballot error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBallot();
+  }, [electionId]);
+
+  const handleSelect = (position: any, candidate: any) => {
+    const positionKey = String(position.uid || position.id || position.title);
+    const candidateValue = candidate.uid || candidate.id || candidate.name;
+
     setSelectedCandidates(prev => ({
       ...prev,
-      [position]: candidateId
+      [positionKey]: candidateValue
     }));
   };
 
-  const positions = [
-    {
-      id: "president",
-      title: "President",
-      candidates: [
-        { id: "p1", name: "OJEDOKUN OLANIYI", image: "/auth2.png" },
-        { id: "p2", name: "AYOMIDE JOHN", image: "/auth3.png" },
-        { id: "p3", name: "SARAH WILLIAMS", image: "/auth4.png" },
-      ]
-    },
-    {
-      id: "vice_president",
-      title: "Vice-President",
-      candidates: [
-        { id: "vp1", name: "EMMANUEL TAIWO", image: "/office.png" },
-        { id: "vp2", name: "DAVID SMITH", image: "/auth2.png" },
-        { id: "vp3", name: "MARY JANE", image: "/auth3.png" },
-      ]
-    },
-    {
-      id: "general_secretary",
-      title: "General Secretary", // Keeping correct spelling unless user explicitly wants the typo "Geneeal"
-      candidates: [
-        { id: "gs1", name: "CHIDI OPARA", image: "/auth4.png" },
-        { id: "gs2", name: "SUCCESS ADE", image: "/office.png" },
-        { id: "gs3", name: "BLESSING OKON", image: "/auth2.png" },
-      ]
+  const handleCastVoteClick = () => {
+    if (Object.keys(selectedCandidates).length === 0) {
+      setAlert({ message: "Please select at least one candidate", type: "warning" });
+      return;
     }
-  ];
+    setIsPinModalOpen(true);
+  };
+
+  const handlePinConfirm = async (userPin: string) => {
+    setIsSubmitting(true);
+    try {
+      let voterToken =
+        queryToken || (typeof window !== "undefined" ? localStorage.getItem("voter_session_token") || "" : "");
+      let resolvedVoterUid =
+        voterUid || (typeof window !== "undefined" ? localStorage.getItem("voter_uid") || "" : "");
+
+      if (!voterToken) {
+        if (!matricNumber) {
+          setIsPinModalOpen(false);
+          setAlert({ message: "Missing voter session. Please login again.", type: "warning" });
+          return;
+        }
+
+        const loginResult = await apiFetch<any>(`/election/voter-login/${electionId}/`, {
+          method: "POST",
+          body: JSON.stringify({
+            matric_number: matricNumber,
+            pin: userPin,
+          }),
+        });
+
+        if (loginResult.status !== "success" || !loginResult.data?.token) {
+          setIsPinModalOpen(false);
+          setAlert({
+            message: formatApiErrorMessage(
+              { message: loginResult.message, errors: loginResult.errors },
+              "Unable to start voting session"
+            ),
+            type: "error",
+          });
+          return;
+        }
+
+        voterToken = loginResult.data.token;
+        resolvedVoterUid = resolvedVoterUid || loginResult.data.voter_uid || "";
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("voter_session_token", voterToken);
+          if (resolvedVoterUid) localStorage.setItem("voter_uid", resolvedVoterUid);
+        }
+      }
+
+      if (!resolvedVoterUid) {
+        setIsPinModalOpen(false);
+        setAlert({ message: "Missing voter ID. Please login again.", type: "warning" });
+        return;
+      }
+
+      const result = await voterFetch<any>(`/election/cast-vote/${resolvedVoterUid}/`, voterToken, {
+        method: "POST",
+        body: JSON.stringify({ selections: selectedCandidates }),
+      });
+
+      if (result.status === "success") {
+        setIsPinModalOpen(false);
+        setAlert({ message: "Vote successfully recorded!", type: "success" });
+        setTimeout(() => router.push("/student/preview"), 1500);
+      } else {
+        setIsPinModalOpen(false);
+        setAlert({
+          message: formatApiErrorMessage(
+            { message: result.message, errors: result.errors },
+            "Failed to record vote"
+          ),
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Cast vote error:", error);
+      setIsPinModalOpen(false);
+      setAlert({ message: "An error occurred while casting your vote.", type: "error" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3457B4]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen p-6 md:p-10 lg:p-12">
@@ -50,15 +151,15 @@ export default function StudentElection() {
         <h1 className="text-lg md:text-xl font-semibold text-gray-900 mb-0.5">
           Election <span className="text-[#3457B4]">Voting</span>
         </h1>
-        <p className="text-gray-500 text-[11px] md:text-xs font-medium">
+        <p className="text-gray-500 text-xs font-medium">
           Select your preferred candidates and cast your vote securely.
         </p>
       </div>
 
       <div className="max-w-[1400px] mx-auto space-y-6 pb-6">
-        {positions.map((position) => (
-          <div 
-            key={position.id} 
+        {positions.map((position: any, idx: number) => (
+          <div
+            key={idx}
             className="bg-white rounded-xl p-8 md:p-10 shadow-sm border border-gray-100"
           >
             {/* Position Header */}
@@ -66,17 +167,19 @@ export default function StudentElection() {
               {position.title}
             </h2>
 
-            {/* Candidates Grid - 3 columns as per audit */}
+            {/* Candidates Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {position.candidates.map((candidate) => {
-                const isSelected = selectedCandidates[position.id] === candidate.id;
+              {position.candidates.map((candidate: any, cIdx: number) => {
+                const positionKey = String(position.uid || position.id || position.title);
+                const candidateValue = candidate.uid || candidate.id || candidate.name;
+                const isSelected = selectedCandidates[positionKey] === candidateValue;
                 return (
-                  <div 
-                    key={candidate.id}
-                    onClick={() => handleSelect(position.id, candidate.id)}
+                  <div
+                    key={cIdx}
+                    onClick={() => handleSelect(position, candidate)}
                     className={`relative flex flex-col bg-white rounded-xl p-5 pb-6 cursor-pointer transition-all duration-200 border ${
-                      isSelected 
-                        ? "border-[#3457B4] ring-4 ring-[#3457B4]/5 shadow-md -translate-y-1" 
+                      isSelected
+                        ? "border-[#3457B4] ring-4 ring-[#3457B4]/5 shadow-md -translate-y-1"
                         : "border-gray-100 hover:border-gray-200 hover:shadow-sm"
                     }`}
                   >
@@ -95,12 +198,18 @@ export default function StudentElection() {
 
                     {/* Candidate Image */}
                     <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden bg-gray-50 border border-gray-50">
-                      <Image
-                        src={candidate.image}
-                        alt={candidate.name}
-                        fill
-                        className="object-cover"
-                      />
+                      {candidate.image ? (
+                        <Image
+                          src={candidate.image}
+                          alt={candidate.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-200 text-2xl">
+                          {candidate.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
                     </div>
 
                     {/* Candidate Name */}
@@ -119,19 +228,36 @@ export default function StudentElection() {
 
       {/* Action Button at Bottom */}
       <div className="max-w-[1400px] mx-auto flex justify-center pb-16">
-        <button 
-          className="text-white font-bold text-[15px] md:text-[14px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14 px-8"
+        <button
+          onClick={handleCastVoteClick}
+          disabled={isSubmitting}
+          className={`text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14 px-8 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           style={{
-            borderRadius: '21px', // Updated to match dashboard standard
+            borderRadius: '21px',
             border: '1.81px solid #676767',
             background: 'linear-gradient(180deg, #3457B4 0%, #4A496A 100%)',
             boxShadow: '0 1.81px 3.619px 0 rgba(16, 24, 40, 0.05)',
             gap: '14.476px'
           }}
         >
-          Cast Vote
+          {isSubmitting ? "Casting..." : "Cast Vote"}
         </button>
       </div>
+
+      {/* Modals */}
+      <PinModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        onConfirm={handlePinConfirm}
+        isLoading={isSubmitting}
+      />
+      <AlertModal
+        isOpen={!!alert}
+        onClose={() => setAlert(null)}
+        message={alert?.message || ""}
+        type={alert?.type}
+      />
     </div>
   );
 }
+

@@ -81,7 +81,7 @@ export default function StudentDashboard() {
       
       {/* Page Header */}
       <div className="mb-4">
-        <h1 className="text-[32px] font-medium text-gray-900 tracking-tight">
+        <h1 className="text-4xl font-medium text-gray-900 tracking-tight">
           Welcome <span className="font-black text-[#3457B4]">Olaniyi</span>
         </h1>
       </div>
@@ -111,7 +111,7 @@ export default function StudentDashboard() {
                   <span className="text-white text-3xl font-bold leading-none">
                     {value}
                   </span>
-                  <span className="text-[#adb5bd] text-[11px] mt-1 font-medium">{label}</span>
+                  <span className="text-[#adb5bd] text-xs mt-1 font-medium">{label}</span>
                 </CircleProgress>
               </div>
             ))}
@@ -126,7 +126,7 @@ export default function StudentDashboard() {
               <span className="text-white text-3xl font-bold leading-none">
                 {CURRENT_VOTES}
               </span>
-              <span className="text-[#adb5bd] text-[11px] mt-1 font-medium">/{TOTAL_VOTES}</span>
+              <span className="text-[#adb5bd] text-xs mt-1 font-medium">/{TOTAL_VOTES}</span>
             </CircleProgress>
           </div>
         </div>
@@ -137,31 +137,31 @@ export default function StudentDashboard() {
         
         {/* Your Details */}
         <div>
-           <h3 className="text-[22px] font-semibold text-[#101828] mb-4 tracking-tight">
+           <h3 className="text-2xl font-semibold text-[#101828] mb-4 tracking-tight">
              Your Details
            </h3>
-           <p className="text-gray-900 text-[16px] font-medium mb-10 max-w-4xl leading-relaxed">
+           <p className="text-gray-900 text-base font-medium mb-10 max-w-4xl leading-relaxed">
              Verify that the below are your details. If the details are not yours,ensure you report to the electoral committee as soon as you can 
            </p>
            
            <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="text-[15px] font-semibold text-black min-w-[120px]">Name :</span>
-                <span className="text-[15px] font-medium text-black capitalize">Ojedokun Olaniyi</span>
+                <span className="text-base font-semibold text-black min-w-[120px]">Name :</span>
+                <span className="text-base font-medium text-black capitalize">Ojedokun Olaniyi</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[15px] font-semibold text-black min-w-[120px]">Matric No :</span>
-                <span className="text-[15px] font-medium text-black uppercase">BU22CSC1087</span>
+                <span className="text-base font-semibold text-black min-w-[120px]">Matric No :</span>
+                <span className="text-base font-medium text-black uppercase">BU22CSC1087</span>
               </div>
            </div>
         </div>
 
         {/* Available Position */}
         <div className="pt-8 border-t border-zinc-100">
-          <h3 className="text-[22px] font-semibold text-[#101828] mb-4 tracking-tight">
+          <h3 className="text-2xl font-semibold text-[#101828] mb-4 tracking-tight">
              Available Position
            </h3>
-           <p className="text-gray-900 text-[16px] font-medium mb-10">
+           <p className="text-gray-900 text-base font-medium mb-10">
              Electoral Positions available for voting
            </p>
            
@@ -169,13 +169,13 @@ export default function StudentDashboard() {
               {/* Column 1 */}
               <div className="space-y-4">
                 {["President", "Vice President", "General Secretary", "Financial Secretary", "P.R.O 1"].map((pos, idx) => (
-                  <div key={idx} className="text-[15px] font-normal text-black">{pos}</div>
+                  <div key={idx} className="text-base font-normal text-black">{pos}</div>
                 ))}
               </div>
               {/* Column 2 */}
               <div className="space-y-4">
                 {["PRO 2", "Hardware Director", "Vice President", "Vice President", "Vice President"].map((pos, idx) => (
-                  <div key={idx} className="text-[15px] font-normal text-black">{pos}</div>
+                  <div key={idx} className="text-base font-normal text-black">{pos}</div>
                 ))}
               </div>
            </div>
@@ -185,7 +185,7 @@ export default function StudentDashboard() {
         <div className="pt-10 flex justify-center md:justify-start">
           <Link 
             href="/student/election"
-            className="text-white font-bold text-[15px] md:text-[14px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14"
+            className="text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14"
             style={{
               borderRadius: '21px', // Updated to 21px as per last mockup
               border: '1.81px solid #676767',
@@ -201,3 +201,4 @@ export default function StudentDashboard() {
     </div>
   );
 }
+
