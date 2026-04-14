@@ -37,3 +37,6 @@ export * from "./voters.api";
 
 // Dashboard
 export * from "./dashboard.api";
+
+// Notifications
+export * from "./notifications.api";

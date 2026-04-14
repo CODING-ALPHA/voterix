@@ -14,9 +14,9 @@ export interface Voter {
 
 export interface VoterBatch {
   uid: string;
-  title: string;
+  name: string;
   created_at: string;
-  voters_count: number;
+  voter_count: number;
 }
 
 export interface CreateVoterPayload {
