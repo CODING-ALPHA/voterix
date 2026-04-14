@@ -74,6 +74,30 @@ export function getElection(publikId: string) {
   return apiFetch<{ status: string; data: ElectionDetail }>(`/election/${publikId}/`);
 }
 
+/** 🔓 Public — Get basic meta-data for an election (Login Page). */
+export function getPublicElectionDetail(publikId: string, matric?: string) {
+  const url = matric 
+    ? `/election/public/${publikId}/?matric=${encodeURIComponent(matric)}`
+    : `/election/public/${publikId}/`;
+    
+  return apiFetch<{ 
+    status: string; 
+    data: { 
+      title: string; 
+      association_name: string; 
+      start_time: string; 
+      end_time: string;
+      status: string;
+      total_eligible_voters: number;
+      voter_status?: {
+        has_voted: boolean;
+        eligibility: string;
+        has_pin: boolean;
+      }
+    } 
+  }>(url);
+}
+
 // ─── Create / Update / Delete ─────────────────────────────────────────────────
 
 /** Create a new election. Optional CSV attaches a voter list immediately. */

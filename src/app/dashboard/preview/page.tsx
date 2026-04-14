@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 import { apiFetch, formatApiErrorMessage } from "@/lib/api-client";
 
 type CandidateRow = {
@@ -21,30 +23,97 @@ type PositionRow = {
 const COLORS = ["#243160", "#5E6993", "#94A3B8", "#B3C2DD", "#D7DFEE"];
 
 const PieChart = ({ candidates }: { candidates: CandidateRow[] }) => {
+  const [hoveredCandidate, setHoveredCandidate] = useState<CandidateRow | null>(null);
   let acc = 0;
+  
+  if (candidates.length === 0 || candidates.every(c => c.votes === 0)) {
+    return (
+      <div className="relative w-full aspect-square max-w-[180px] md:max-w-[220px] mx-auto flex items-center justify-center rounded-full bg-gray-50 border-2 border-dashed border-gray-200">
+        <span className="text-gray-300 font-bold text-xs uppercase tracking-widest">No Votes</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative w-full aspect-square max-w-[180px] md:max-w-[220px] mx-auto">
-      <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+    <div className="relative w-full aspect-square max-w-[220px] md:max-w-[260px] mx-auto group">
+      {/* Center Image/Info (Donut Style) */}
+      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+        <div className="w-[60%] h-[60%] bg-white rounded-full shadow-inner flex flex-col items-center justify-center overflow-hidden border-4 border-gray-50/50">
+           {hoveredCandidate ? (
+             <>
+               <div className="relative w-full h-full">
+                 <Image 
+                   src={hoveredCandidate.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(hoveredCandidate.name)}`} 
+                   alt={hoveredCandidate.name} 
+                   fill 
+                   className="object-cover animate-in fade-in zoom-in-95 duration-300"
+                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2">
+                    <span className="text-[10px] font-black text-white uppercase tracking-wider">{Math.round(hoveredCandidate.percentage)}%</span>
+                 </div>
+               </div>
+             </>
+           ) : (
+             <div className="text-center p-4 animate-in fade-in duration-500">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-tight">Hover to Inspect</p>
+             </div>
+           )}
+        </div>
+      </div>
+
+      <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 drop-shadow-xl overflow-visible">
         {candidates.map((cand, i) => {
+          if (cand.percentage === 0) return null;
+          
+          const isHovered = hoveredCandidate?.name === cand.name;
           const start = acc;
           acc += cand.percentage;
+
+          // Special case for 100%
+          if (cand.percentage === 100) {
+            return (
+              <circle
+                key={`${cand.name}-${i}`}
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke={cand.color}
+                strokeWidth={isHovered ? "12" : "10"}
+                className="transition-all duration-300 cursor-pointer"
+                onMouseEnter={() => setHoveredCandidate(cand)}
+                onMouseLeave={() => setHoveredCandidate(null)}
+              />
+            );
+          }
+
           const startAngle = (start / 100) * 360;
           const endAngle = (acc / 100) * 360;
 
-          const x1 = 50 + 50 * Math.cos((startAngle * Math.PI) / 180);
-          const y1 = 50 + 50 * Math.sin((startAngle * Math.PI) / 180);
-          const x2 = 50 + 50 * Math.cos((endAngle * Math.PI) / 180);
-          const y2 = 50 + 50 * Math.sin((endAngle * Math.PI) / 180);
+          // Calculate path for donut segment
+          const radius = 45;
+          const x1 = 50 + radius * Math.cos((startAngle * Math.PI) / 180);
+          const y1 = 50 + radius * Math.sin((startAngle * Math.PI) / 180);
+          const x2 = 50 + radius * Math.cos((endAngle * Math.PI) / 180);
+          const y2 = 50 + radius * Math.sin((endAngle * Math.PI) / 180);
           const largeArc = cand.percentage > 50 ? 1 : 0;
 
           return (
             <path
               key={`${cand.name}-${i}`}
-              d={`M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`}
-              fill={cand.color}
-              stroke="white"
-              strokeWidth="0.5"
+              d={`M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`}
+              fill="none"
+              stroke={cand.color}
+              strokeWidth={isHovered ? "12" : "10"}
+              strokeLinecap="round"
+              className="transition-all duration-300 cursor-pointer hover:opacity-90"
+              style={{ 
+                filter: isHovered ? 'brightness(1.1) drop-shadow(0 0 4px rgba(0,0,0,0.1))' : 'none',
+                transform: isHovered ? 'scale(1.02)' : 'none',
+                transformOrigin: '50% 50%'
+              }}
+              onMouseEnter={() => setHoveredCandidate(cand)}
+              onMouseLeave={() => setHoveredCandidate(null)}
             />
           );
         })}
@@ -64,6 +133,7 @@ export default function PreviewPage() {
   const [electionTitle, setElectionTitle] = useState("Live Preview");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [turnoutData, setTurnoutData] = useState<{ percent: number; voted: number; eligible: number } | null>(null);
 
   const selectedElectionTitle = useMemo(() => {
     const hit = elections.find((item) => item.publik_id === selectedPublikId);
@@ -82,7 +152,6 @@ export default function PreviewPage() {
             title: String(item.title || "Election"),
           }));
           setElections(rows);
-
           const fallbackId = queryPublikId || rows[0]?.publik_id || "";
           setSelectedPublikId((current) => current || fallbackId);
         }
@@ -92,13 +161,11 @@ export default function PreviewPage() {
         setIsLoading(false);
       }
     };
-
     bootstrap();
   }, [queryPublikId]);
 
   useEffect(() => {
     if (!selectedPublikId) return;
-
     const fetchPreview = async () => {
       setIsLoading(true);
       setError("");
@@ -109,12 +176,7 @@ export default function PreviewPage() {
           const turnout = data.turnout || {};
           const voted = Number(turnout.total_voted ?? turnout.voted ?? 0);
           const eligible = Number(turnout.total_eligible ?? turnout.total ?? 0);
-          const percent =
-            turnout.percent != null
-              ? Number(turnout.percent)
-              : eligible > 0
-              ? Math.round((voted / eligible) * 100)
-              : 0;
+          const percent = turnout.percent != null ? Number(turnout.percent) : eligible > 0 ? Math.round((voted / eligible) * 100) : 0;
 
           const mappedPositions = (data.positions || []).map((position: any) => ({
             title: String(position.title || "Position"),
@@ -126,10 +188,10 @@ export default function PreviewPage() {
               color: COLORS[index % COLORS.length],
             })),
           }));
-
           setPositions(mappedPositions);
           setElectionTitle(String(data.election_title || selectedElectionTitle || "Live Preview"));
-          setTurnoutText(`${percent}% (${voted})`);
+          setTurnoutText(`${percent}% (${voted} / ${eligible})`);
+          setTurnoutData({ percent, voted, eligible });
         }
       } catch (err) {
         setError(formatApiErrorMessage(err, "Could not load live preview."));
@@ -137,84 +199,118 @@ export default function PreviewPage() {
         setIsLoading(false);
       }
     };
-
     fetchPreview();
   }, [selectedPublikId, selectedElectionTitle]);
 
   return (
-    <div className="flex flex-col gap-6 mb-12">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-            Live Preview : <span className="text-gray-600 font-semibold">{selectedElectionTitle}</span>
+    <div className="max-w-[1240px] mx-auto space-y-8 mb-20 px-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-black text-[#101828] tracking-tight">
+            Live Preview : <span className="text-[#405189]">{selectedElectionTitle}</span>
           </h1>
-          <p className="text-gray-500 font-medium text-sm mt-1">
-            Total Turnout : <span className="text-gray-900 font-bold">{turnoutText}</span>
-          </p>
+          <div className="flex items-center gap-4">
+             <Link 
+               href={`/dashboard/election/voters?election=${selectedPublikId}`}
+               className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all"
+             >
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Turnout:</span>
+                <span className="text-sm font-black text-[#101828] group-hover:text-[#405189] transition-colors">
+                    {turnoutText}
+                </span>
+             </Link>
+          </div>
         </div>
 
-        <select
-          value={selectedPublikId}
-          onChange={(e) => setSelectedPublikId(e.target.value)}
-          className="h-10 min-w-[240px] rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-800 focus:outline-none focus:border-[#405189]"
-        >
-          {elections.map((item) => (
-            <option key={item.publik_id} value={item.publik_id}>
-              {item.title}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-col gap-1.5 min-w-[280px]">
+           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Switch Election</label>
+           <select
+             value={selectedPublikId}
+             onChange={(e) => setSelectedPublikId(e.target.value)}
+             className="h-12 w-full appearance-none rounded-[20px] bg-white border border-gray-200 px-5 text-sm font-bold text-[#101828] shadow-sm focus:outline-none focus:border-[#405189] focus:ring-4 focus:ring-[#405189]/5 transition-all cursor-pointer"
+           >
+             {elections.map((item) => (
+               <option key={item.publik_id} value={item.publik_id}>
+                 {item.title}
+               </option>
+             ))}
+           </select>
+        </div>
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {error}
+        <div className="rounded-[24px] border border-red-100 bg-red-50/50 p-6 flex items-center gap-4 text-red-700 animate-in fade-in slide-in-from-top-4">
+          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+             <X size={20} />
+          </div>
+          <div>
+             <p className="text-sm font-black uppercase tracking-wider">Loading Error</p>
+             <p className="text-sm font-medium opacity-80">{error}</p>
+          </div>
         </div>
       ) : null}
 
       {isLoading ? (
-        <div className="bg-white rounded-[24px] p-10 shadow-sm border border-gray-100 text-sm font-semibold text-gray-500">
-          Loading preview...
+        <div className="h-[400px] flex items-center justify-center">
+           <div className="flex flex-col items-center gap-4 text-gray-400">
+              <div className="w-12 h-12 border-4 border-gray-100 border-t-[#243160] rounded-full animate-spin" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Synchronizing Results</span>
+           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-8">
           {positions.map((position, pIdx) => (
             <div
               key={`${position.title}-${pIdx}`}
-              className="bg-white rounded-[24px] p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-8 lg:items-center"
+              className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100 flex flex-col xl:flex-row gap-12 lg:items-center relative overflow-hidden group/card"
             >
-              <div className="lg:w-[45%] flex flex-col gap-4">
-                <h2 className="text-base md:text-lg font-bold text-gray-900">{position.title}</h2>
-                <div className="flex-1 flex items-center justify-center py-2">
+              {/* Background Accents */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#F8FAFF] rounded-full -translate-y-1/2 translate-x-1/2 opacity-50 group-hover/card:scale-110 transition-transform duration-700" />
+              
+              <div className="xl:w-[45%] flex flex-col gap-8 relative z-10">
+                <div className="space-y-1">
+                   <h2 className="text-2xl md:text-3xl font-black text-[#101828] tracking-tight">{position.title}</h2>
+                   <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Position Results</p>
+                </div>
+                <div className="flex-1 flex items-center justify-center">
                   <PieChart candidates={position.candidates} />
                 </div>
               </div>
 
-              <div className="lg:w-[55%] flex flex-col gap-6">
+              <div className="xl:w-[55%] flex flex-col gap-6 relative z-10">
                 {position.candidates.map((cand, cIdx) => (
-                  <div key={`${cand.name}-${cIdx}`} className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gray-100 border-2 border-white shadow-sm overflow-hidden flex-shrink-0 relative">
-                        {cand.image ? (
-                          <Image src={cand.image} alt={cand.name} fill className="object-cover" />
-                        ) : (
-                          <Image
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cand.name)}`}
-                            alt={cand.name}
-                            fill
-                            className="object-cover"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900 leading-none mb-1">{cand.name}</h3>
-                        <p className="text-xs font-semibold text-gray-500">{cand.votes} votes</p>
-                      </div>
+                  <div key={`${cand.name}-${cIdx}`} className="bg-[#F8FAFF] p-6 rounded-[32px] border border-transparent hover:border-[#405189]/20 hover:bg-white hover:shadow-xl hover:shadow-[#405189]/5 transition-all duration-300 group/cand">
+                    <div className="flex items-center justify-between mb-4">
+                       <div className="flex items-center gap-4">
+                          <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md">
+                             <Image 
+                               src={cand.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cand.name)}`} 
+                               alt={cand.name} 
+                               fill 
+                               className="object-cover" 
+                             />
+                          </div>
+                          <div>
+                             <h3 className="text-base font-black text-[#101828] group-hover/cand:text-[#405189] transition-colors">{cand.name}</h3>
+                             <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-[#405189]">{cand.votes} votes</span>
+                                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                <span className="text-xs font-bold text-gray-400 capitalize">Candidate</span>
+                             </div>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-xl font-black text-[#101828] leading-none mb-1">{Math.round(cand.percentage)}%</p>
+                          <div className={`h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden ml-auto`}>
+                             <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${cand.percentage}%`, backgroundColor: cand.color }} />
+                          </div>
+                       </div>
                     </div>
 
-                    <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100">
+                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-white">
                       <div
-                        className="h-full rounded-full transition-all duration-700 ease-out"
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${cand.percentage}%`, backgroundColor: cand.color }}
                       />
                     </div>

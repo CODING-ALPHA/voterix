@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ArrowUpDown, Plus, MoreHorizontal } from "lucide-react";
+import { Search, ArrowUpDown, Plus, MoreHorizontal, Link as LinkIcon, Copy, Check } from "lucide-react";
 import EditElectionModal from "@/components/EditElectionModal";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api-client";
@@ -13,7 +13,8 @@ export default function ElectionsPage() {
   const [selectedElection, setSelectedElection] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { accessToken } = useAuth();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { accessToken, user } = useAuth();
 
   const fetchElections = async () => {
     try {
@@ -58,6 +59,16 @@ export default function ElectionsPage() {
   const handleEdit = (election: any) => {
     setSelectedElection(election);
     setIsEditModalOpen(true);
+  };
+
+  const handleCopyLink = (election: any) => {
+    const baseUrl = window.location.origin;
+    // Format: /student/login?assoc=ASSOC_ID&election=ELECT_ID
+    const link = `${baseUrl}/student/login?assoc=${user?.publik_id}&election=${election.publik_id}`;
+    
+    navigator.clipboard.writeText(link);
+    setCopiedId(election.id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -147,6 +158,18 @@ export default function ElectionsPage() {
                     </span>
                   </div>
 
+                  <div className="flex items-center gap-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-100">
+                    <p className="text-[10px] font-medium text-gray-500 truncate flex-1 leading-none">
+                      {window.location.origin}/student/login?assoc={user?.publik_id}&election={election.publik_id}
+                    </p>
+                    <button 
+                      onClick={() => handleCopyLink(election)}
+                      className="text-indigo-600 hover:text-indigo-700 transition-colors shrink-0"
+                    >
+                      {copiedId === election.id ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4 py-1">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Start Time</p>
@@ -178,12 +201,12 @@ export default function ElectionsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 text-gray-500">
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider w-full">Name</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Start time</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">End time</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right">
+                    <th className="px-6 py-4 text-left">
                       <button className="p-1.5 hover:bg-gray-50 rounded-md">
                         <MoreHorizontal size={16} className="text-gray-500" />
                       </button>
@@ -193,7 +216,7 @@ export default function ElectionsPage() {
                 <tbody>
                   {elections.map((election) => (
                     <tr key={election.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-3.5">
+                      <td className="px-6 py-3.5 w-full">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
                             {election.initials}
@@ -209,13 +232,27 @@ export default function ElectionsPage() {
                           {election.status}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <button 
-                          onClick={() => handleEdit(election)}
-                          className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <MoreHorizontal size={16} className="text-gray-500" />
-                        </button>
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleCopyLink(election)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
+                              copiedId === election.id 
+                                ? "bg-green-50 text-green-600 border-green-100" 
+                                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 whitespace-nowrap"
+                            }`}
+                            title="Copy Voting Link"
+                          >
+                            {copiedId === election.id ? <Check size={14} /> : <LinkIcon size={14} />}
+                            {copiedId === election.id ? "Copied" : "Copy Link"}
+                          </button>
+                          <button 
+                            onClick={() => handleEdit(election)}
+                            className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                          >
+                            <MoreHorizontal size={16} className="text-gray-500" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
