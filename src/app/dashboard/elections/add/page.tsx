@@ -771,7 +771,7 @@ export default function AddElectionPage() {
                         setPositions(newPos);
                       }}
                       placeholder="e.g. President"
-                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400"
+                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -785,7 +785,7 @@ export default function AddElectionPage() {
                         setPositions(newPos);
                       }}
                       placeholder="e.g. The lead executive of the association"
-                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400"
+                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-500"
                     />
                   </div>
                 </div>
@@ -818,7 +818,7 @@ export default function AddElectionPage() {
                                setPositions(newPos);
                              }}
                              placeholder="e.g. Ojedokun Olaniyi"
-                             className="flex-1 bg-white border border-gray-300 h-9 px-3 rounded-lg text-sm focus:outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                             className="flex-1 bg-white border border-gray-300 h-9 px-3 rounded-lg text-sm focus:outline-none text-gray-900 font-medium placeholder:text-gray-500"
                            />
                          </div>
                          <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
