@@ -14,9 +14,9 @@ export interface Voter {
 
 export interface VoterBatch {
   uid: string;
-  title: string;
+  name: string;
   created_at: string;
-  voters_count: number;
+  voter_count: number;
 }
 
 export interface CreateVoterPayload {
@@ -58,7 +58,7 @@ export function listVoters(assocPublikId: string) {
 /** Update an existing voter's details. */
 export function updateVoter(
   voterUid: string,
-  payload: Partial<CreateVoterPayload> & { status?: string }
+  payload: Partial<CreateVoterPayload> & { status?: string; eligibility_status?: string }
 ) {
   return apiFetch(`/voters/${voterUid}/update/`, {
     method: "PATCH",
@@ -73,7 +73,7 @@ export function deleteVoter(voterUid: string) {
 
 /** Manually mark a voter as verified (bypass OTP flow). */
 export function manuallyVerifyVoter(voterUid: string) {
-  return apiFetch(`/voters/verify/${voterUid}/manual/`, { method: "PATCH" });
+  return apiFetch(`/voters/verify/${voterUid}/manual/`, { method: "POST" });
 }
 
 /** Send a WhatsApp reminder to a specific voter for an election. */
@@ -151,5 +151,15 @@ export function voterVerifyOtp(matric_no: string, otp: string) {
   return apiFetch<VoterOtpResponse>("/voters/verify-otp/", {
     method: "POST",
     body: JSON.stringify({ matric_no, otp }),
+  });
+}
+
+/**
+ * Step 3 — Voter sets their 6-digit Voting PIN.
+ */
+export function voterSetPin(electionPublikId: string, matric_number: string, pin: string) {
+  return apiFetch<VoterOtpResponse>(`/election/set-pin/${electionPublikId}/`, {
+    method: "POST",
+    body: JSON.stringify({ matric_number, pin }),
   });
 }

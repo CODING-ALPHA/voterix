@@ -262,8 +262,14 @@ export default function SettingsPage() {
         {/* Left Side: Profile Info Card */}
         <div className="w-full lg:w-[320px] bg-white border border-gray-100 shadow-sm flex flex-col items-center flex-shrink-0 relative h-fit">
           <div className="w-full p-8 flex flex-col items-center relative text-center">
-            <div className="relative w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-100 mb-5">
+            <div 
+              className="relative w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-100 mb-5 cursor-pointer group"
+              onClick={() => fileInputRef.current?.click()}
+            >
               <Image src={profileImage} alt="Profile" fill className="object-cover" />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                 <Camera size={24} className="text-white drop-shadow-md" />
+              </div>
             </div>
 
             <button

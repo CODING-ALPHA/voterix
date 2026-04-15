@@ -19,12 +19,36 @@ import {
   X as CloseIcon
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { listNotifications, type Notification } from "@/lib/notifications.api";
+import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
+  const [hasUnread, setHasUnread] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!user) return;
+    
+    const checkNotifications = async () => {
+      try {
+        const res = await listNotifications();
+        if (res.status === "success") {
+          const unread = res.data.some(n => !n.is_read);
+          setHasUnread(unread);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    };
+
+    checkNotifications();
+    const interval = setInterval(checkNotifications, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [user]);
 
   const getInitials = (name?: string) => {
     return name
@@ -133,10 +157,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* User Section */}
           <div className="flex items-center gap-3 md:gap-6 shrink-0">
             {/* Notification */}
-            <button className="relative p-2 text-zinc-400 hover:text-zinc-600">
+            <Link 
+              href="/dashboard/notifications"
+              className="relative p-2 text-zinc-400 hover:text-[#3457B4] hover:bg-blue-50 rounded-lg transition-all duration-200"
+            >
               <Bell size={20} />
-              <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white"></span>
-            </button>
+              {hasUnread && (
+                <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white animate-pulse"></span>
+              )}
+            </Link>
 
             {/* Profile Dropdown */}
             <div className="relative">
@@ -144,8 +173,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-3 pl-3 md:pl-4 border-l border-zinc-100 hover:opacity-80 transition-opacity focus:outline-none"
               >
-                <div className="w-8 h-8 rounded-full bg-[#8B5CF6] flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                  {getInitials(user?.name) || "NB"}
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-[#8B5CF6] flex items-center justify-center text-white font-bold text-xs shadow-sm relative">
+                  {user?.profile_picture ? (
+                    <Image 
+                      src={user.profile_picture} 
+                      alt="Profile" 
+                      fill 
+                      className="object-cover"
+                    />
+                  ) : (
+                    getInitials(user?.name) || "NB"
+                  )}
                 </div>
                 <div className="hidden sm:flex flex-col text-left leading-tight">
                   <span className="font-bold text-[#FE9431] text-[0.65rem] uppercase tracking-wider">Admin</span>

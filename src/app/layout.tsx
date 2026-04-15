@@ -45,9 +45,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${poppins.variable} ${manrope.variable} ${lato.variable} ${bebasNeue.variable} ${mulish.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
         <AuthProvider>
           {children}

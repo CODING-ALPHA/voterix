@@ -1,36 +1,54 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Building2, 
   Eye, 
   Headset, 
   LogOut,
-  Search,
-  Bell,
-  ChevronDown,
   Menu,
   X as CloseIcon
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const queryElectionId = searchParams.get("election") || searchParams.get("id");
+  const queryAssocId = searchParams.get("assoc");
 
-  const getInitials = (name?: string) => {
-    return name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2) || "ST";
+  const [activeElectionId, setActiveElectionId] = useState<string | null>(null);
+  const [activeAssocId, setActiveAssocId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    // 1. Sync from URL to LocalStorage (if present)
+    if (queryElectionId) localStorage.setItem("voter_active_election", queryElectionId);
+    if (queryAssocId) localStorage.setItem("voter_active_assoc", queryAssocId);
+
+    // 2. Set active state from URL or LocalStorage
+    setActiveElectionId(queryElectionId || localStorage.getItem("voter_active_election"));
+    setActiveAssocId(queryAssocId || localStorage.getItem("voter_active_assoc"));
+  }, [queryElectionId, queryAssocId]);
+
+  const handleVoterLogout = () => {
+    localStorage.removeItem("voter_session_token");
+    localStorage.removeItem("voter_uid");
+    localStorage.removeItem("voter_name");
+    localStorage.removeItem("voter_matric");
+    localStorage.removeItem("voter_active_election");
+    localStorage.removeItem("voter_active_assoc");
+    
+    const params = new URLSearchParams();
+    if (activeElectionId) params.set("election", activeElectionId);
+    if (activeAssocId) params.set("assoc", activeAssocId);
+    
+    router.push(`/student/login?${params.toString()}`);
   };
 
   const navItems = [
@@ -39,6 +57,22 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     { name: "Preview", href: "/student/preview", icon: Eye },
   ];
 
+  const buildHref = (href: string) => {
+    const eid = activeElectionId || queryElectionId;
+    if (!eid) return href;
+    const params = new URLSearchParams();
+    params.set("election", eid);
+    const aid = activeAssocId || queryAssocId;
+    if (aid) params.set("assoc", aid);
+    return `${href}?${params.toString()}`;
+  };
+
+  const isAuthPage = pathname === "/student/login" || pathname === "/student/verify" || pathname.startsWith("/student/login?");
+  
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+ 
   return (
     <div className="flex h-screen bg-[#F8F9FB] font-sans overflow-hidden">
       {/* Mobile Sidebar Overlay */}
@@ -50,13 +84,13 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       )}
 
       {/* Sidebar (Desktop & Mobile Drawer) */}
-      <aside className={`
+    <aside className={`
         fixed inset-y-0 left-0 z-[70] w-[260px] bg-[#243160] text-white flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         {/* Logo */}
         <div className="flex h-[120px] items-center justify-between px-6 relative">
-          <Link href="/student" className="flex items-center justify-center w-full">
+          <Link href={buildHref("/student")} className="flex items-center justify-center w-full">
             <div className="relative w-full h-[80px]">
               <Image
                 src="/logo.svg"
@@ -80,7 +114,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             return (
                <Link
                key={item.href}
-               href={item.href}
+               href={buildHref(item.href)}
                onClick={() => setIsSidebarOpen(false)}
                className={`flex items-center gap-3 px-4 py-2.5 rounded-full font-bold transition-all duration-200 ${
                  isActive 
@@ -94,87 +128,36 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             );
           })}
         </nav>
+        {/* Bottom Actions */}
+        <div className="p-4 space-y-2 border-t border-white/10 mt-auto">
+          <button 
+            className="w-full h-11 flex items-center gap-3 px-4 rounded-xl font-bold text-white/90 hover:bg-white/5 hover:text-white transition-all duration-200"
+            onClick={() => window.open('mailto:support@voterix.com')}
+          >
+            <Headset size={18} strokeWidth={2} />
+            <span className="text-xs uppercase tracking-wide">Contact Support</span>
+          </button>
+          <button 
+            className="w-full h-11 flex items-center gap-3 px-4 rounded-xl font-bold text-[#FF4D4C] hover:bg-red-500/10 transition-all duration-200"
+            onClick={() => handleVoterLogout()}
+          >
+            <LogOut size={18} strokeWidth={2} />
+            <span className="text-xs uppercase tracking-wide">Logout</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        {/* Header */}
-        <header className="h-[64px] bg-white border-b border-zinc-100 flex items-center justify-between px-4 md:px-8 shrink-0">
-          <div className="flex items-center gap-4 flex-1">
-            {/* Hamburger Menu (Mobile) */}
+        {/* Mobile Hamburger Header (Only on mobile) */}
+        <header className="h-[64px] bg-white border-b border-zinc-100 flex items-center px-4 shrink-0 lg:hidden">
             <button 
-              className="lg:hidden w-10 h-10 flex items-center justify-center text-zinc-500 hover:bg-zinc-50 rounded-lg transition-colors"
+              className="w-10 h-10 flex items-center justify-center text-zinc-500 hover:bg-zinc-50 rounded-lg transition-colors"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu size={20} />
             </button>
-
-            {/* Search */}
-            <div className="hidden sm:flex items-center gap-2 text-gray-500 w-full max-w-md">
-              <Search size={16} />
-              <input 
-                type="text" 
-                placeholder="Search anything..." 
-                className="w-full bg-transparent border-none focus:ring-0 text-sm font-medium outline-none text-gray-900 placeholder:text-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* User Section */}
-          <div className="flex items-center gap-3 md:gap-6 shrink-0">
-            {/* Notification */}
-            <button className="relative w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-50 transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white"></span>
-            </button>
-
-            {/* Profile Dropdown */}
-            <div className="relative">
-              <button 
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-3 pl-3 md:pl-4 border-l border-zinc-100 hover:opacity-80 transition-opacity focus:outline-none"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#3457B4] flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                  {getInitials(user?.name) || "OO"}
-                </div>
-                <div className="hidden sm:flex flex-col text-left leading-tight">
-                  <span className="font-bold text-[#FF4D4C] text-[0.7rem] uppercase tracking-wider">Student</span>
-                  <span className="font-medium text-gray-900 text-xs">{user?.name || "Ojedokun Olaniyi"}</span>
-                </div>
-                <ChevronDown size={16} className={`text-zinc-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Dropdown Menu */}
-              {isProfileMenuOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setIsProfileMenuOpen(false)}
-                  />
-                  <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-lg border border-zinc-100 z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <button 
-                      className="w-full h-10 flex items-center gap-3 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#3457B4] transition-colors"
-                      onClick={() => setIsProfileMenuOpen(false)}
-                    >
-                      <Headset size={18} strokeWidth={2} />
-                      <span>Contact Support</span>
-                    </button>
-                    <div className="h-px bg-zinc-100 my-1"></div>
-                    <button 
-                      className="w-full h-10 flex items-center gap-3 px-4 text-sm font-medium text-[#FF4D4C] hover:bg-red-50 transition-colors"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        logout();
-                      }}
-                    >
-                      <LogOut size={18} strokeWidth={2} />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+            <span className="ml-4 font-black text-[#243160] tracking-tighter">VOTERIX</span>
         </header>
 
         {/* Page Content */}
@@ -192,4 +175,3 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     </div>
   );
 }
-

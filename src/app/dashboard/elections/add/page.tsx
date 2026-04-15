@@ -109,6 +109,8 @@ const SuccessModal = ({
 import { apiUpload, formatApiErrorMessage } from "@/lib/api-client";
 import AlertModal from "@/components/AlertModal";
 import { createCandidate, createPosition } from "@/lib/positions.api";
+import { listVoterBatches, VoterBatch } from "@/lib/voters.api";
+import { getProfile } from "@/lib/association.api";
 
 // --- Sub-components ---
 // ... (SuccessModal remains same)
@@ -195,6 +197,8 @@ export default function AddElectionPage() {
   const [verificationLink, setVerificationLink] = useState("");
   const [alert, setAlert] = useState<{ message: string; type: "error" | "success" | "warning" | "info" } | null>(null);
   const [openPicker, setOpenPicker] = useState<PickerType | null>(null);
+  const [availableBatches, setAvailableBatches] = useState<VoterBatch[]>([]);
+  const [selectedBatchUids, setSelectedBatchUids] = useState<string[]>([]);
   
   // Form State - Step 1
   const [electionTitle, setElectionTitle] = useState("");
@@ -267,6 +271,21 @@ export default function AddElectionPage() {
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
+  React.useEffect(() => {
+    const loadBatches = async () => {
+      try {
+        const profile = await getProfile();
+        if (profile.data?.publik_id) {
+          const batches = await listVoterBatches(profile.data.publik_id);
+          setAvailableBatches(batches.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to load batches:", error);
+      }
+    };
+    loadBatches();
+  }, []);
+
   const handleDateSelect = (dateValue: string) => {
     setElectionDate(dateValue);
     const [year, month] = dateValue.split("-").map(Number);
@@ -315,6 +334,12 @@ export default function AddElectionPage() {
       formData.append("end_time", endIso);
       if (spreadsheetFile) {
         formData.append("csv_file", spreadsheetFile);
+      }
+      
+      if (selectedBatchUids.length > 0) {
+        selectedBatchUids.forEach(uid => {
+          formData.append("voter_batch_uids", uid);
+        });
       }
 
       const result = await apiUpload<{
@@ -634,29 +659,73 @@ export default function AddElectionPage() {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-gray-900 font-medium text-xs">Add/Upload Spreadsheet (CSV)</label>
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={handleFileClick}
-                  className="flex items-center gap-2 h-10 px-4 border border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-gray-400 hover:bg-gray-50 transition-all w-fit text-sm"
-                >
-                  <Upload size={16} />
-                  <span>{spreadsheetFile ? spreadsheetFile.name : "Select CSV file"}</span>
-                </button>
-                {spreadsheetFile && (
-                  <button onClick={() => setSpreadsheetFile(null)} className="text-red-500 p-1 hover:bg-red-50 rounded">
-                    <Trash2 size={16} />
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-gray-900 font-medium text-xs">Add/Upload Spreadsheet (CSV)</label>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={handleFileClick}
+                    className="flex items-center gap-2 h-10 px-4 border border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-gray-400 hover:bg-gray-50 transition-all w-fit text-sm"
+                  >
+                    <Upload size={16} />
+                    <span>{spreadsheetFile ? spreadsheetFile.name : "Upload new CSV file"}</span>
                   </button>
-                )}
+                  {spreadsheetFile && (
+                    <button onClick={() => setSpreadsheetFile(null)} className="text-red-500 p-1 hover:bg-red-50 rounded">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept=".csv" 
+                  className="hidden" 
+                />
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                accept=".csv" 
-                className="hidden" 
-              />
+
+              {availableBatches.length > 0 && (
+                <div className="space-y-2.5">
+                  <label className="text-gray-900 font-medium text-xs uppercase tracking-wider">Or Select from Previous Batches</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {availableBatches.map((batch) => {
+                      const isSelected = selectedBatchUids.includes(batch.uid);
+                      return (
+                        <div 
+                          key={batch.uid}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedBatchUids(selectedBatchUids.filter(id => id !== batch.uid));
+                            } else {
+                              setSelectedBatchUids([...selectedBatchUids, batch.uid]);
+                            }
+                          }}
+                          className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                            isSelected 
+                              ? "bg-blue-50 border-blue-400 shadow-sm" 
+                              : "bg-white border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span className={`text-sm font-semibold ${isSelected ? "text-blue-700" : "text-gray-900"}`}>
+                              {batch.name}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-medium">
+                              {batch.voter_count} voters • {new Date(batch.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"
+                          }`}>
+                            {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-center gap-4 pt-4">
@@ -702,7 +771,7 @@ export default function AddElectionPage() {
                         setPositions(newPos);
                       }}
                       placeholder="e.g. President"
-                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400"
+                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -716,7 +785,7 @@ export default function AddElectionPage() {
                         setPositions(newPos);
                       }}
                       placeholder="e.g. The lead executive of the association"
-                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400"
+                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-500"
                     />
                   </div>
                 </div>
@@ -749,7 +818,7 @@ export default function AddElectionPage() {
                                setPositions(newPos);
                              }}
                              placeholder="e.g. Ojedokun Olaniyi"
-                             className="flex-1 bg-white border border-gray-300 h-9 px-3 rounded-lg text-sm focus:outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                             className="flex-1 bg-white border border-gray-300 h-9 px-3 rounded-lg text-sm focus:outline-none text-gray-900 font-medium placeholder:text-gray-500"
                            />
                          </div>
                          <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">

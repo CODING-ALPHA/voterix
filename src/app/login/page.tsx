@@ -35,7 +35,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen" suppressHydrationWarning>
       {/* Left Side: Form */}
       <div className="flex w-full flex-col justify-center px-8 lg:w-1/2 lg:px-24 bg-white text-zinc-900">
         <div className="mb-12">
