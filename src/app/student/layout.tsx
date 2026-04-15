@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import {
   X as CloseIcon
 } from "lucide-react";
 
-export default function StudentLayout({ children }: { children: React.ReactNode }) {
+function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,3 +175,16 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     </div>
   );
 }
+
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-[#F8F9FB]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#243160]"></div>
+      </div>
+    }>
+      <StudentLayoutContent>{children}</StudentLayoutContent>
+    </Suspense>
+  );
+}
+
