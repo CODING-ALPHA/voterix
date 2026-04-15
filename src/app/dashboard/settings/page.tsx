@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
   const [isOtpVerificationModalOpen, setIsOtpVerificationModalOpen] = useState(false);
+  const [isGeneralUpdateOtpOpen, setIsGeneralUpdateOtpOpen] = useState(false);
   const [isRequestingResetOtp, setIsRequestingResetOtp] = useState(false);
 
   const [organizationName, setOrganizationName] = useState("");
@@ -143,8 +144,6 @@ export default function SettingsPage() {
 
     setIsUpdating(true);
     try {
-      let otpCode = verifiedResetOtp;
-
       if (!hasPasswordChange) {
         const otpResult = await requestProfileOtp();
         if ((otpResult as { status?: string }).status !== "success") {
@@ -156,21 +155,25 @@ export default function SettingsPage() {
             ),
             type: "error",
           });
+          setIsUpdating(false);
           return;
         }
-
-        otpCode = window.prompt("Enter the OTP from your email to confirm this update.");
-        if (!otpCode?.trim()) {
-          setAlert({ message: "OTP is required to complete this update.", type: "warning" });
-          return;
-        }
-      }
-
-      if (!otpCode?.trim()) {
-        setAlert({ message: "OTP verification is required.", type: "warning" });
+        setIsGeneralUpdateOtpOpen(true);
+        setIsUpdating(false);
         return;
       }
 
+      await performFinalUpdate(verifiedResetOtp || "");
+    } catch (error) {
+      console.error("Update profile error:", error);
+      setAlert({ message: "Could not update profile right now.", type: "error" });
+      setIsUpdating(false);
+    }
+  };
+
+  const performFinalUpdate = async (otpCode: string) => {
+    setIsUpdating(true);
+    try {
       const payload: {
         otp: string;
         name?: string;
@@ -450,6 +453,17 @@ export default function SettingsPage() {
         onVerify={() => {
           setIsOtpVerificationModalOpen(false);
           setAlert({ message: "OTP verified. You can now set a new password.", type: "success" });
+        }}
+      />
+
+      <VerificationCodeModal
+        isOpen={isGeneralUpdateOtpOpen}
+        onClose={() => setIsGeneralUpdateOtpOpen(false)}
+        email={email}
+        purpose="login"
+        onVerify={() => setIsGeneralUpdateOtpOpen(false)}
+        onCodeVerify={async (code) => {
+          await performFinalUpdate(code);
         }}
       />
 

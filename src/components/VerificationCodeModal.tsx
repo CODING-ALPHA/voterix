@@ -112,7 +112,7 @@ export default function VerificationCodeModal({
             )}
 
             <p className="text-sm font-medium text-gray-600 max-w-md leading-relaxed">
-              Please check akinbinuayomide1@gmail.com and enter the 6-digit verification code below.
+              Please check {email} and enter the 6-digit verification code below.
             </p>
             {/* Code Inputs */}
             <div className="flex gap-2.5 mt-8 mb-9">
