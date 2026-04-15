@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import AlertModal from "@/components/AlertModal";
 import { PinModal } from "@/components/AlertModal";
 import { apiFetch, formatApiErrorMessage, voterFetch } from "@/lib/api-client";
 
-export default function StudentElection() {
+function ElectionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -304,6 +304,18 @@ export default function StudentElection() {
         type={alert?.type}
       />
     </div>
+  );
+}
+
+export default function StudentElection() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3457B4]"></div>
+      </div>
+    }>
+      <ElectionContent />
+    </Suspense>
   );
 }
 

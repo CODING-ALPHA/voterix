@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -122,7 +122,7 @@ const PieChart = ({ candidates }: { candidates: CandidateRow[] }) => {
   );
 };
 
-export default function PreviewPage() {
+function PreviewContent() {
   const searchParams = useSearchParams();
   const queryPublikId = searchParams.get("id");
 
@@ -322,5 +322,20 @@ export default function PreviewPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PreviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-gray-400">
+           <div className="w-12 h-12 border-4 border-gray-100 border-t-[#243160] rounded-full animate-spin" />
+           <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Loading Preview...</span>
+        </div>
+      </div>
+    }>
+      <PreviewContent />
+    </Suspense>
   );
 }
