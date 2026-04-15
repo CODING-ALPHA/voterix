@@ -4,7 +4,7 @@
  * Automatically attaches JWT Bearer token from localStorage.
  */
 
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
+const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || ""}`.replace(/\/+$/, "");
 
 type ApiErrorPayload = {
   message?: unknown;
@@ -152,7 +152,8 @@ export async function apiFetch<T = unknown>(
   const token = getAccessToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const fullPath = `${BASE_URL}/${path.replace(/^\/+/, "")}`;
+  const res = await fetch(fullPath, { ...options, headers });
 
   let data: unknown = null;
   try {
@@ -195,7 +196,8 @@ export async function voterFetch<T = unknown>(
     ...(options.headers as Record<string, string>),
   };
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const fullPath = `${BASE_URL}/${path.replace(/^\/+/, "")}`;
+  const res = await fetch(fullPath, { ...options, headers });
 
   let data: unknown = null;
   try {
@@ -236,7 +238,8 @@ export async function apiUpload<T = unknown>(
   const token = getAccessToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const fullPath = `${BASE_URL}/${path.replace(/^\/+/, "")}`;
+  const res = await fetch(fullPath, {
     method,
     headers,
     body: formData,
