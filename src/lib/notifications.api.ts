@@ -8,14 +8,27 @@ export interface Notification {
   created_at: string;
 }
 
-export function listNotifications() {
-  return apiFetch<{ status: string; data: Notification[] }>("/auth/notifications/");
+export interface NotificationResponse {
+  status: string;
+  data: {
+    notifications: Notification[];
+    pagination: {
+      total_count: number;
+      total_pages: number;
+      current_page: number;
+      page_size: number;
+    };
+  };
+}
+
+export function listNotifications(page = 1, pageSize = 10) {
+  return apiFetch<NotificationResponse>(`/auth/notifications/?page=${page}&page_size=${pageSize}`);
 }
 
 export function markNotificationAsRead(uid: string) {
-  return apiFetch(`/auth/notifications/${uid}/mark-read/`, { method: "POST" });
+  return apiFetch<{ status: string; message: string }>(`/auth/notifications/${uid}/mark-read/`, { method: "POST" });
 }
 
 export function markAllNotificationsAsRead() {
-  return apiFetch("/auth/notifications/mark-all-read/", { method: "POST" });
+  return apiFetch<{ status: string; message: string }>("/auth/notifications/mark-all-read/", { method: "POST" });
 }

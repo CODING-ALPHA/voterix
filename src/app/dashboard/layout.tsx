@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       try {
         const res = await listNotifications();
         if (res.status === "success") {
-          const unread = res.data.some(n => !n.is_read);
+          const unread = res.data?.notifications?.some(n => !n.is_read) || false;
           setHasUnread(unread);
         }
       } catch (err) {
