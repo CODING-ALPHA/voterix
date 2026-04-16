@@ -83,7 +83,7 @@ function collectErrorMessages(value: unknown): string[] {
 
 export function formatApiErrorMessage(
   value: unknown,
-  fallback = "Something went wrong"
+  fallback = "Something went wrong. Please try again."
 ): string {
   const messages = Array.from(
     new Set(
@@ -93,7 +93,36 @@ export function formatApiErrorMessage(
     )
   );
 
-  return messages.length > 0 ? messages.join(". ") : fallback;
+  // If we have messages, filter out any that look like technical JSON or tracebacks
+  const cleanMessages = messages.filter(msg => {
+    const isJson = msg.startsWith('{') || msg.startsWith('[');
+    const isTraceback = msg.includes('Traceback') || msg.includes('line ') || msg.includes('File "/');
+    const isDbError = msg.includes('psycopg2') || msg.includes('column "') || msg.includes('relation "');
+    const isGenericHttp = msg.startsWith('HTTP ');
+    
+    // Final polish on the message string
+    let finalMsg = msg;
+    if (finalMsg.toLowerCase().includes("already exists")) {
+       finalMsg = "This record already exists in the system.";
+    }
+    
+    return !isJson && !isTraceback && !isDbError && !isGenericHttp;
+  });
+
+  if (cleanMessages.length > 0) {
+    return cleanMessages.join(". ");
+  }
+
+  // Handle common status code fallbacks
+  if (typeof value === 'object' && value !== null && 'status' in (value as any)) {
+    const status = (value as any).status;
+    if (status >= 500) return "Server error. Please contact support or try again later.";
+    if (status === 413) return "The uploaded file is too large.";
+    if (status === 403) return "Access denied. You don't have permission for this.";
+    if (status === 404) return "The requested resource was not found.";
+  }
+
+  return fallback;
 }
 
 // ─── Token Helpers ────────────────────────────────────────────────────────────

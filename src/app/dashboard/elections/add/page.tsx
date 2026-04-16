@@ -286,7 +286,13 @@ export default function AddElectionPage() {
     loadBatches();
   }, []);
 
+  const todayIso = React.useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
+  }, []);
+
   const handleDateSelect = (dateValue: string) => {
+    if (dateValue < todayIso) return;
     setElectionDate(dateValue);
     const [year, month] = dateValue.split("-").map(Number);
     setCalendarMonth(new Date(year, month - 1, 1));
@@ -319,7 +325,17 @@ export default function AddElectionPage() {
 
   const handleNextStep = async () => {
     if (!electionTitle || !electionDate || !startTime || !endTime) {
-      setAlert({ message: "Please fill in all election details", type: "warning" });
+      setAlert({ message: "Please fill in all election basic details", type: "warning" });
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setAlert({ message: "End time must be after start time on the same day.", type: "warning" });
+      return;
+    }
+
+    if (!spreadsheetFile && selectedBatchUids.length === 0) {
+      setAlert({ message: "Please upload a voter CSV or select a previous batch to proceed.", type: "warning" });
       return;
     }
 
@@ -364,7 +380,7 @@ export default function AddElectionPage() {
       }
     } catch (error) {
       console.error("Create election error:", error);
-      setAlert({ message: "An error occurred. Please try again.", type: "error" });
+      setAlert({ message: formatApiErrorMessage(error, "An error occurred. Please try again."), type: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -374,10 +390,12 @@ export default function AddElectionPage() {
     if (!publikId) return;
 
     setIsLoading(true);
+    let successCount = 0;
     try {
       // Loop through positions and candidates to create them
       for (const pos of positions) {
-        // 1. Create Position
+        if (!pos.title) continue;
+        
         const posResult = await createPosition(publikId, {
           title: pos.title,
           description: pos.description,
@@ -385,9 +403,10 @@ export default function AddElectionPage() {
         
         if (posResult.status === "success") {
           const positionUid = posResult.data.uid;
+          successCount++;
           
-          // 2. Create Candidates for this position
           for (const cand of pos.candidates) {
+            if (!cand.name) continue;
             await createCandidate(positionUid, {
               name: cand.name,
               bio: cand.bio,
@@ -396,10 +415,14 @@ export default function AddElectionPage() {
           }
         }
       }
+      
+      if (successCount === 0 && positions.some(p => p.title)) {
+         throw new Error("Failed to save any positions. Please check your data.");
+      }
+
       setShowSuccess(true);
     } catch (error) {
-      console.error("Save positions/candidates error:", error);
-      setAlert({ message: "An error occurred while saving positions. Some might have been missed.", type: "error" });
+       setAlert({ message: formatApiErrorMessage(error, "Failed to finalize positions."), type: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -539,6 +562,7 @@ export default function AddElectionPage() {
                     <div className="mb-3 flex items-center justify-between px-1">
                       <button
                         type="button"
+                        disabled={calendarMonth.getFullYear() === new Date().getFullYear() && calendarMonth.getMonth() === new Date().getMonth()}
                         onClick={() =>
                           setCalendarMonth(
                             new Date(
@@ -548,7 +572,7 @@ export default function AddElectionPage() {
                             )
                           )
                         }
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-[#405189] transition-colors hover:bg-[#EEF4FF]"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-[#405189] transition-colors hover:bg-[#EEF4FF] disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         <ChevronLeft size={16} />
                       </button>
@@ -586,15 +610,19 @@ export default function AddElectionPage() {
                     <div className="grid grid-cols-7 gap-1">
                       {calendarDays.map((day) => {
                         const isSelected = electionDate === day.iso;
+                        const isPast = day.iso < todayIso;
 
                         return (
                           <button
                             key={day.key}
                             type="button"
+                            disabled={isPast}
                             onClick={() => handleDateSelect(day.iso)}
                             className={`flex h-10 items-center justify-center rounded-xl text-sm font-semibold transition-all ${
                               isSelected
                                 ? "bg-[#3457B4] text-white shadow-sm"
+                                : isPast
+                                ? "text-[#D1D5DB] cursor-default opacity-40 hover:bg-transparent"
                                 : day.isCurrentMonth
                                 ? "text-[#243160] hover:bg-[#EEF4FF]"
                                 : "text-[#B8C2D7] hover:bg-[#F7F9FC]"

@@ -5,17 +5,17 @@ import Image from "next/image";
 import { AlertCircle, KeyRound, Mail, User, Phone } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AlertModal from "@/components/AlertModal";
-import { 
-    formatApiErrorMessage, 
-    voterRequestOtp, 
-    getPublicElectionDetail, 
-    apiFetch 
+import {
+  formatApiErrorMessage,
+  voterRequestOtp,
+  getPublicElectionDetail,
+  apiFetch
 } from "@/lib/api-client";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const assocId = searchParams.get("assoc");
   const electionId = searchParams.get("election");
 
@@ -25,13 +25,13 @@ function LoginContent() {
   const [email, setEmail] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pin, setPin] = useState("");
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMeta, setIsFetchingMeta] = useState(false);
   const [matricError, setMatricError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [alert, setAlert] = useState<{ message: string; type: "error" | "warning" } | null>(null);
-  
+
   const [meta, setMeta] = useState<any>(null);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ function LoginContent() {
       setAlert({ message: "Association ID is missing from URL. Please use the official voting link.", type: "error" });
       return;
     }
-    
+
     setIsLoading(true);
     setMatricError(false);
     setErrorMessage("");
@@ -111,15 +111,15 @@ function LoginContent() {
         localStorage.setItem("voter_uid", voter_uid);
         localStorage.setItem("voter_name", voter_name);
         localStorage.setItem("voter_matric", matricNo);
-        
+
         router.push(`/student?election=${electionId}&assoc=${assocId || ''}`);
       } else {
         setMatricError(true);
         setErrorMessage(result.message || "Invalid matric number or PIN");
       }
     } catch (error) {
-       console.error("PIN Login error:", error);
-       setAlert({ message: "Incorrect PIN or Matric number. Ensure you have set your PIN via the OTP flow first.", type: "error" });
+      console.error("PIN Login error:", error);
+      setAlert({ message: "Incorrect PIN or Matric number. Ensure you have set your PIN via the OTP flow first.", type: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -127,10 +127,10 @@ function LoginContent() {
 
   return (
     <div className="w-full max-w-[520px] bg-white rounded-[40px] p-10 md:p-14 border border-zinc-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] relative overflow-hidden">
-      
+
       {/* Dynamic Background Accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#3457B4]/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50" />
-      
+
       <div className="flex flex-col items-center mb-10 text-center relative z-10">
         <div className="relative w-40 h-14 mb-6">
           <Image
@@ -141,7 +141,7 @@ function LoginContent() {
             className="object-contain"
           />
         </div>
-        
+
         {isFetchingMeta ? (
           <div className="animate-pulse space-y-3 w-full">
             <div className="h-3 w-32 bg-gray-50 rounded mx-auto"></div>
@@ -161,22 +161,22 @@ function LoginContent() {
 
       {/* Mode Toggle */}
       <div className="bg-gray-50 p-1.5 rounded-2xl mb-10 flex gap-2 relative z-10">
-          <button 
-            onClick={() => setLoginMode("otp")}
-            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMode === 'otp' ? 'bg-white text-[#3457B4] shadow-sm ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            OTP Verification
-          </button>
-          <button 
-             onClick={() => setLoginMode("pin")}
-             className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMode === 'pin' ? 'bg-white text-[#3457B4] shadow-sm ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            Login with PIN
-          </button>
+        <button
+          onClick={() => setLoginMode("otp")}
+          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMode === 'otp' ? 'bg-white text-[#3457B4] shadow-sm ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          OTP Verification
+        </button>
+        <button
+          onClick={() => setLoginMode("pin")}
+          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMode === 'pin' ? 'bg-white text-[#3457B4] shadow-sm ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          Login with PIN
+        </button>
       </div>
 
       <form className="space-y-5 relative z-10" onSubmit={loginMode === "otp" ? handleOtpLogin : handlePinLogin}>
-        
+
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400 pl-1">
             Matric No
@@ -190,10 +190,10 @@ function LoginContent() {
               value={matricNo}
               onChange={(e) => setMatricNo(e.target.value)}
               required
-              placeholder="BU22CSC1087"
+              placeholder="e.g., BU22CSC****"
               className={`w-full h-14 pl-14 pr-12 rounded-2xl border bg-white text-gray-900 text-sm font-bold focus:outline-none transition-all ${matricError
-                  ? "border-red-500 focus:ring-4 focus:ring-red-500/10 placeholder:text-red-200"
-                  : "border-zinc-200 focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4]"
+                ? "border-red-500 focus:ring-4 focus:ring-red-500/10 placeholder:text-red-200"
+                : "border-zinc-200 focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4]"
                 }`}
             />
             {matricError && (
@@ -217,16 +217,16 @@ function LoginContent() {
                 Full Name
               </label>
               <div className="relative group">
-                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
-                    <User size={18} strokeWidth={2.5} />
-                 </div>
-                 <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Surname - Firstname"
-                    required
-                    className="w-full h-14 pl-14 px-5 rounded-2xl border border-zinc-200 bg-white text-gray-900 text-sm font-bold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
+                  <User size={18} strokeWidth={2.5} />
+                </div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Surname - Firstname"
+                  required
+                  className="w-full h-14 pl-14 px-5 rounded-2xl border border-zinc-200 bg-white text-gray-900 text-sm font-bold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
                 />
               </div>
             </div>
@@ -236,16 +236,16 @@ function LoginContent() {
                 Institutional Email
               </label>
               <div className="relative group">
-                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
-                    <Mail size={18} strokeWidth={2.5} />
-                 </div>
-                 <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="voter@institutional.edu"
-                    className="w-full h-14 pl-14 px-5 rounded-2xl border border-zinc-200 bg-white text-gray-900 text-sm font-bold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
+                  <Mail size={18} strokeWidth={2.5} />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="voter@institutional.edu"
+                  className="w-full h-14 pl-14 px-5 rounded-2xl border border-zinc-200 bg-white text-gray-900 text-sm font-bold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
                 />
               </div>
             </div>
@@ -255,16 +255,16 @@ function LoginContent() {
                 WhatsApp Number
               </label>
               <div className="relative group">
-                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
-                    <Phone size={18} strokeWidth={2.5} />
-                 </div>
-                 <input
-                    type="tel"
-                    value={whatsappNumber}
-                    onChange={(e) => setWhatsappNumber(e.target.value)}
-                    required
-                    placeholder="0810 000 0000"
-                    className="w-full h-14 pl-14 px-5 rounded-2xl border border-zinc-200 bg-white text-gray-900 text-sm font-bold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
+                  <Phone size={18} strokeWidth={2.5} />
+                </div>
+                <input
+                  type="tel"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  required
+                  placeholder="0810 000 0000"
+                  className="w-full h-14 pl-14 px-5 rounded-2xl border border-zinc-200 bg-white text-gray-900 text-sm font-bold placeholder:text-zinc-300 focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
                 />
               </div>
             </div>
@@ -274,11 +274,11 @@ function LoginContent() {
             <label className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400 pl-1">
               Secret Voting PIN
             </label>
-             <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
-                    <KeyRound size={18} strokeWidth={2.5} />
-                </div>
-                <input
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-zinc-300 group-focus-within:text-[#3457B4] transition-colors">
+                <KeyRound size={18} strokeWidth={2.5} />
+              </div>
+              <input
                 type="password"
                 maxLength={6}
                 value={pin}
@@ -286,7 +286,7 @@ function LoginContent() {
                 required
                 placeholder="••••••"
                 className="w-full h-14 pl-14 text-2xl tracking-[0.5em] rounded-2xl border border-zinc-200 bg-white text-gray-900 font-black placeholder:text-zinc-300 placeholder:tracking-normal focus:outline-none focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4] transition-all"
-                />
+              />
             </div>
             <p className="text-[9px] text-zinc-400 font-bold mt-2 pl-1 italic">
               * Enter the 6-digit PIN sent to your Email or WhatsApp.
@@ -312,10 +312,10 @@ function LoginContent() {
 
       <div className="mt-8 text-center relative z-10">
         <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
-            {loginMode === "otp" 
-                ? "First time? Complete verification to receive your PIN." 
-                : "Missing your PIN? Contact your Association Admin."
-            }
+          {loginMode === "otp"
+            ? "First time? Complete verification to receive your PIN."
+            : "Missing your PIN? Contact your Association Admin."
+          }
         </p>
       </div>
 
@@ -333,7 +333,7 @@ export default function StudentLogin() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 text-zinc-900 p-6 font-sans">
       <Suspense fallback={<div className="text-gray-400 font-bold animate-pulse">Initializing Secure Login...</div>}>
-         <LoginContent />
+        <LoginContent />
       </Suspense>
     </div>
   );

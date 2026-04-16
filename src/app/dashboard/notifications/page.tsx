@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Star, Calendar, ChevronDown, Loader2 } from "lucide-react";
+import { Star, Calendar, ChevronDown, Loader2, X } from "lucide-react";
 import { listNotifications, markNotificationAsRead, Notification } from "@/lib/api-client";
 
 export default function NotificationsPage() {
@@ -23,22 +23,21 @@ export default function NotificationsPage() {
     fetchNotifications();
   }, []);
 
-  const handleMarkAsRead = async (uid: string, isRead: boolean) => {
-    if (isRead) return; // Already read
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+
+  const handleNotificationClick = async (notification: Notification) => {
+    setSelectedNotification(notification);
+    if (notification.is_read) return;
 
     // Optimistic update
     setNotifications(prev => 
-      prev.map(n => n.uid === uid ? { ...n, isRead: true } : n)
+      prev.map(n => n.uid === notification.uid ? { ...n, is_read: true } : n)
     );
     
     try {
-      await markNotificationAsRead(uid);
+      await markNotificationAsRead(notification.uid);
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
-      // Revert if failed
-      setNotifications(prev => 
-        prev.map(n => n.uid === uid ? { ...n, isRead: false } : n)
-      );
     }
   };
 
@@ -47,15 +46,20 @@ export default function NotificationsPage() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
   return (
     <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-300">
       {/* Header Area */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Notification</h1>
+        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Notifications</h1>
         
         <button className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
           <Calendar size={16} className="text-gray-400" />
-          <span>Last 30 Days</span>
+          <span>Recent Updates</span>
           <ChevronDown size={14} className="ml-1 text-gray-400" />
         </button>
       </div>
@@ -69,7 +73,7 @@ export default function NotificationsPage() {
         ) : notifications.length === 0 ? (
           /* Empty State */
           <div className="flex-1 flex items-center justify-center p-8">
-            <h3 className="text-lg font-bold text-gray-900">No Notification at this time</h3>
+            <h3 className="text-lg font-bold text-gray-900">No Notifications at this time</h3>
           </div>
         ) : (
           /* Notifications List */
@@ -77,7 +81,7 @@ export default function NotificationsPage() {
             {notifications.map((notification) => (
               <div 
                 key={notification.uid}
-                onClick={() => handleMarkAsRead(notification.uid, notification.is_read)}
+                onClick={() => handleNotificationClick(notification)}
                 className={`flex items-center gap-4 md:gap-8 p-4 md:px-6 rounded-lg border transition-all cursor-pointer ${
                   notification.is_read 
                     ? "bg-white border-gray-200 hover:bg-gray-50/50" 
@@ -99,16 +103,7 @@ export default function NotificationsPage() {
                 {/* Message Content */}
                 <div className="flex-1 truncate">
                   <span className={`text-sm ${notification.is_read ? "font-medium text-gray-500" : "font-semibold text-gray-900"}`}>
-                    {notification.message.includes(":") ? (
-                      <>
-                        <span className={notification.is_read ? "text-gray-600 font-semibold" : ""}>
-                          {notification.message.split(":")[0]}:
-                        </span>
-                        {notification.message.split(":")[1]}
-                      </>
-                    ) : (
-                      notification.message
-                    )}
+                    {notification.message}
                   </span>
                 </div>
                 
@@ -123,6 +118,43 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      {selectedNotification && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]" onClick={() => setSelectedNotification(null)} />
+          <div className="relative w-full max-w-lg bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-8 pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Notification Detail</h2>
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="w-10 h-10 flex items-center justify-center bg-[#F0F5FF] text-[#405189] rounded-xl hover:bg-[#E5EEFF] transition-colors"
+                aria-label="Close modal"
+              >
+                <X size={20} strokeWidth={2.5} />
+              </button>
+            </div>
+            <div className="px-8 pb-10">
+               <div className="bg-[#F8FAFF] border border-[#E8EEFF] rounded-2xl p-6 mb-6">
+                  <p className="text-xs font-black text-[#405189] uppercase tracking-widest mb-2">Subject</p>
+                  <h3 className="text-lg font-bold text-[#101828] mb-4">{selectedNotification.title}</h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Received</p>
+                  <p className="text-sm font-bold text-slate-600">{formatDate(selectedNotification.created_at)} at {formatTime(selectedNotification.created_at)}</p>
+               </div>
+               <div className="prose prose-sm max-w-none">
+                  <p className="text-base font-medium text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {selectedNotification.message}
+                  </p>
+               </div>
+               <div className="mt-8 pt-6 border-t border-gray-100">
+                  <button onClick={() => setSelectedNotification(null)} className="w-full h-12 bg-[#405189] text-white rounded-2xl font-bold shadow-lg shadow-[#405189]/10 hover:opacity-95 transition-all active:scale-95">
+                     Dismiss Detail
+                  </button>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
