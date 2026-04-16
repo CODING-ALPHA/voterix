@@ -51,8 +51,16 @@ export function createVoter(payload: CreateVoterPayload) {
 }
 
 /** List all voters registered to an association. */
-export function listVoters(assocPublikId: string) {
-  return apiFetch<{ status: string; data: Voter[] }>(`/voters/list/${assocPublikId}/`);
+export function listVoters(
+  assocPublikId: string,
+  params?: { page?: number; page_size?: number; search?: string; status?: string }
+) {
+  let url = `/voters/list/${assocPublikId}/?`;
+  if (params?.page) url += `page=${params.page}&`;
+  if (params?.page_size) url += `page_size=${params.page_size}&`;
+  if (params?.search) url += `search=${encodeURIComponent(params.search)}&`;
+  if (params?.status) url += `status=${encodeURIComponent(params.status)}&`;
+  return apiFetch<{ status: string; data: any }>(url);
 }
 
 /** Update an existing voter's details. */
@@ -111,20 +119,29 @@ export function getRegistrationMonitor(assocPublikId: string) {
 // ─── Voter Batches ────────────────────────────────────────────────────────────
 
 /** List all uploaded voter batches for an association. */
-export function listVoterBatches(assocPublikId: string) {
-  return apiFetch<{ status: string; data: VoterBatch[] }>(
-    `/voters/batches/${assocPublikId}/`
-  );
+export function listVoterBatches(
+  assocPublikId: string,
+  params?: { page?: number; page_size?: number; search?: string }
+) {
+  let url = `/voters/batches/${assocPublikId}/?`;
+  if (params?.page) url += `page=${params.page}&`;
+  if (params?.page_size) url += `page_size=${params.page_size}&`;
+  if (params?.search) url += `search=${encodeURIComponent(params.search)}&`;
+  return apiFetch<{ status: string; data: any }>(url);
 }
 
 /** Get full detail for a single voter batch (includes individual voters). */
-export function getVoterBatchDetail(batchUid: string) {
-  return apiFetch<{ status: string; data: VoterBatch & { voters: Voter[] } }>(
-    `/voters/batches/detail/${batchUid}/`
-  );
+export function getVoterBatchDetail(
+  batchUid: string,
+  params?: { page?: number; page_size?: number; search?: string; status?: string }
+) {
+  let url = `/voters/batches/detail/${batchUid}/?`;
+  if (params?.page) url += `page=${params.page}&`;
+  if (params?.page_size) url += `page_size=${params.page_size}&`;
+  if (params?.search) url += `search=${encodeURIComponent(params.search)}&`;
+  if (params?.status) url += `status=${encodeURIComponent(params.status)}&`;
+  return apiFetch<{ status: string; data: any }>(url);
 }
-
-// ─── Voter Self-Registration (🔓 Public) ──────────────────────────────────────
 
 /**
  * Step 1 — Voter submits their details to receive a verification OTP.

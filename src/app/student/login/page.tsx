@@ -190,7 +190,7 @@ function LoginContent() {
               value={matricNo}
               onChange={(e) => setMatricNo(e.target.value)}
               required
-              placeholder="e.g., BU22CSC****"
+              placeholder="Enter Matric No."
               className={`w-full h-14 pl-14 pr-12 rounded-2xl border bg-white text-gray-900 text-sm font-bold focus:outline-none transition-all ${matricError
                 ? "border-red-500 focus:ring-4 focus:ring-red-500/10 placeholder:text-red-200"
                 : "border-zinc-200 focus:ring-4 focus:ring-[#3457B4]/5 focus:border-[#3457B4]"

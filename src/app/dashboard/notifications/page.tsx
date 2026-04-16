@@ -12,7 +12,7 @@ export default function NotificationsPage() {
     const fetchNotifications = async () => {
       try {
         const response = await listNotifications();
-        setNotifications(response.data || []);
+        setNotifications(response.data?.notifications || []);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       } finally {

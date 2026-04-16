@@ -145,37 +145,69 @@ export default function VotersRegistryPage() {
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editStatus, setEditStatus] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchBatches = async () => {
+  const [pagination, setPagination] = useState({
+    total_count: 0,
+    total_pages: 0,
+    current_page: 1,
+    page_size: 10,
+    has_next: false,
+    has_prev: false
+  });
+
+  const fetchBatches = async (page = 1) => {
     if (!assocPublikId) return;
+    setIsLoading(true);
     try {
-      const result = await listVoterBatches(assocPublikId);
+      const result = await listVoterBatches(assocPublikId, {
+        page,
+        page_size: 12,
+        search: search || undefined
+      });
       if ((result as any).status === "success") {
-        setBatches(((result as any).data || []).map(mapBatch));
+        setBatches(((result as any).data?.items || []).map(mapBatch));
+        setPagination((result as any).data?.pagination);
       }
     } catch (e) {}
     setIsLoading(false);
   };
 
-  const fetchBatchVoters = async (batchId: string) => {
+  const fetchBatchVoters = async (batchId: string, page = 1) => {
     setIsLoading(true);
     try {
-      const result = await getVoterBatchDetail(batchId);
+      const result = await getVoterBatchDetail(batchId, {
+        page,
+        page_size: 10,
+        search: search || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter
+      });
       if ((result as any).status === "success") {
-        setVoters(((result as any).data?.voters || []).map(mapVoter));
+        setVoters(((result as any).data?.items || []).map(mapVoter));
+        setPagination((result as any).data?.pagination);
       }
     } catch (e) {}
     setIsLoading(false);
   };
 
   useEffect(() => {
-    if (accessToken && assocPublikId) fetchBatches();
-  }, [accessToken, assocPublikId]);
+    const timer = setTimeout(() => {
+      if (accessToken && assocPublikId) {
+        if (view === "batches") fetchBatches(1);
+        else if (selectedBatch) fetchBatchVoters(selectedBatch.id, 1);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [accessToken, assocPublikId, search, statusFilter, view, selectedBatch]);
+
+  const handlePageChange = (newPage: number) => {
+    if (view === "batches") fetchBatches(newPage);
+    else if (selectedBatch) fetchBatchVoters(selectedBatch.id, newPage);
+  };
 
   const handleSelectBatch = (batch: BatchRow) => {
     setSelectedBatch(batch);
     setView("voters");
-    fetchBatchVoters(batch.id);
   };
 
   const handleUploadCSV = async () => {
@@ -185,7 +217,7 @@ export default function VotersRegistryPage() {
       await uploadVotersCsv(assocPublikId, csvFile, csvTitle || undefined);
       setIsUploadModalOpen(false);
       setCsvFile(null); setCsvTitle("");
-      await fetchBatches();
+      await fetchBatches(1);
       setAlert({ message: "Registry batch uploaded successfully.", type: "success" });
     } catch (error) {
        setAlert({ message: formatApiErrorMessage(error, "Upload failed."), type: "error" });
@@ -207,7 +239,7 @@ export default function VotersRegistryPage() {
        });
        setIsAddModalOpen(false);
        setVoterName(""); setVoterMatric(""); setVoterEmail(""); setVoterPhone("");
-       await fetchBatchVoters(selectedBatch.id);
+       await fetchBatchVoters(selectedBatch.id, 1);
        setAlert({ message: "Voter added manually.", type: "success" });
      } catch (e) {
        setAlert({ message: formatApiErrorMessage(e, "Add voter failed."), type: "error" });
@@ -226,7 +258,7 @@ export default function VotersRegistryPage() {
         whatsapp_number: editPhone,
         eligibility_status: editStatus.toLowerCase()
       });
-      if (selectedBatch) await fetchBatchVoters(selectedBatch.id);
+      if (selectedBatch) await fetchBatchVoters(selectedBatch.id, pagination.current_page);
       setEditingVoter(null);
       setAlert({ message: "Record updated.", type: "success" });
     } catch (e) {
@@ -239,7 +271,7 @@ export default function VotersRegistryPage() {
     setIsDeleting(true);
     try {
       await deleteVoter(voterId);
-      if (selectedBatch) await fetchBatchVoters(selectedBatch.id);
+      if (selectedBatch) await fetchBatchVoters(selectedBatch.id, pagination.current_page);
       setVoterMenu({ id: null, x: 0, y: 0 });
       setAlert({ message: "Voter record deleted.", type: "success" });
     } catch (e) {
@@ -257,31 +289,7 @@ export default function VotersRegistryPage() {
     setVoterMenu({ id: null, x: 0, y: 0 });
   };
 
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const filteredVoters = useMemo(() => {
-    let result = voters;
-    const term = search.toLowerCase();
-    
-    if (term) {
-      result = result.filter(v => [v.name, v.matric, v.email, v.phone].join(" ").toLowerCase().includes(term));
-    }
-
-    if (statusFilter !== "all") {
-      result = result.filter(v => v.status.toLowerCase() === statusFilter.toLowerCase());
-    }
-
-    return result;
-  }, [voters, search, statusFilter]);
-
-  const totalPages = Math.ceil(filteredVoters.length / itemsPerPage);
-  const currentVoters = filteredVoters.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter]);
+  const currentVoters = voters;
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6">
@@ -297,7 +305,7 @@ export default function VotersRegistryPage() {
                   {view === "batches" ? "Voter Registry" : selectedBatch?.name}
                 </h1>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                   {view === "batches" ? "Association Database" : "Total: " + filteredVoters.length + " Match"}
+                   {view === "batches" ? "Association Database" : "Total: " + pagination.total_count + " Records"}
                 </p>
              </div>
           </div>
@@ -359,22 +367,46 @@ export default function VotersRegistryPage() {
                       </button>
                    </div>
                 ) : (
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {batches.map(batch => (
-                         <button key={batch.id} onClick={() => handleSelectBatch(batch)} className="group p-8 bg-[#F8FAFF] border border-[#E8EEFF] rounded-[32px] text-left hover:border-[#405189] hover:bg-white transition-all shadow-sm hover:shadow-xl">
-                            <div className="flex items-center justify-between mb-6">
-                               <div className="w-12 h-12 bg-[#243160] rounded-2xl flex items-center justify-center text-white font-black">
-                                  {batch.initials}
-                               </div>
-                               <div className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black text-[#405189] uppercase tracking-wider group-hover:bg-[#405189] group-hover:text-white transition-colors">
-                                  {batch.votersCount} Voters
-                               </div>
-                            </div>
-                            <h3 className="text-lg font-black text-[#101828] mb-1 truncate">{batch.name}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Registry Batch</p>
-                         </button>
-                      ))}
-                   </div>
+                   <>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {batches.map(batch => (
+                           <button key={batch.id} onClick={() => handleSelectBatch(batch)} className="group p-8 bg-[#F8FAFF] border border-[#E8EEFF] rounded-[32px] text-left hover:border-[#405189] hover:bg-white transition-all shadow-sm hover:shadow-xl">
+                              <div className="flex items-center justify-between mb-6">
+                                 <div className="w-12 h-12 bg-[#243160] rounded-2xl flex items-center justify-center text-white font-black">
+                                    {batch.initials}
+                                 </div>
+                                 <div className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black text-[#405189] uppercase tracking-wider group-hover:bg-[#405189] group-hover:text-white transition-colors">
+                                    {batch.votersCount} Voters
+                                 </div>
+                              </div>
+                              <h3 className="text-lg font-black text-[#101828] mb-1 truncate">{batch.name}</h3>
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Registry Batch</p>
+                           </button>
+                        ))}
+                     </div>
+                     {/* Batches Pagination */}
+                     <div className="mt-8 px-4 flex items-center justify-between">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                           Page {pagination.current_page} of {pagination.total_pages || 1}
+                        </p>
+                        <div className="flex gap-2">
+                           <button 
+                             disabled={!pagination.has_prev}
+                             onClick={() => handlePageChange(pagination.current_page - 1)}
+                             className="h-9 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                           >
+                              Prev
+                           </button>
+                           <button 
+                             disabled={!pagination.has_next}
+                             onClick={() => handlePageChange(pagination.current_page + 1)}
+                             className="h-9 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                           >
+                              Next
+                           </button>
+                        </div>
+                     </div>
+                   </>
                 )}
              </div>
           ) : (
@@ -443,29 +475,27 @@ export default function VotersRegistryPage() {
                </div>
                
                {/* Pagination Footer */}
-               {totalPages > 1 && (
-                 <div className="px-8 py-6 border-t border-gray-50 flex items-center justify-between">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredVoters.length)} of {filteredVoters.length} records
-                    </p>
-                    <div className="flex gap-2">
-                       <button 
-                         disabled={currentPage === 1}
-                         onClick={() => setCurrentPage(p => p - 1)}
-                         className="h-10 px-4 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
-                       >
-                          Previous
-                       </button>
-                       <button 
-                         disabled={currentPage === totalPages}
-                         onClick={() => setCurrentPage(p => p + 1)}
-                         className="h-10 px-4 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
-                       >
-                          Next
-                       </button>
-                    </div>
-                 </div>
-               )}
+               <div className="px-8 py-6 border-t border-gray-50 flex items-center justify-between mt-auto">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                     Page {pagination.current_page} of {pagination.total_pages || 1} • {pagination.total_count} records
+                  </p>
+                  <div className="flex gap-2">
+                     <button 
+                       disabled={!pagination.has_prev}
+                       onClick={() => handlePageChange(pagination.current_page - 1)}
+                       className="h-10 px-4 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                     >
+                        Previous
+                     </button>
+                     <button 
+                       disabled={!pagination.has_next}
+                       onClick={() => handlePageChange(pagination.current_page + 1)}
+                       className="h-10 px-4 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                     >
+                        Next
+                     </button>
+                  </div>
+               </div>
              </>
           )}
        </div>
