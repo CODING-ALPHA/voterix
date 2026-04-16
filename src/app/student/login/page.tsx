@@ -126,7 +126,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="w-full max-w-[520px] bg-white rounded-[40px] p-10 md:p-14 border border-zinc-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] relative overflow-hidden">
+    <div className="w-full max-w-[520px] bg-white rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 md:p-14 border border-zinc-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.06)] relative overflow-hidden">
 
       {/* Dynamic Background Accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#3457B4]/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50" />
@@ -298,9 +298,9 @@ function LoginContent() {
           <button
             type="submit"
             disabled={isLoading || isFetchingMeta}
-            className={`w-full h-15 font-black uppercase tracking-[0.25em] text-[11px] text-white transition-all hover:opacity-95 active:scale-[0.98] flex items-center justify-center gap-3 ${isLoading || isFetchingMeta ? 'opacity-70' : ''}`}
+            className={`w-full h-14 sm:h-15 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[10px] sm:text-[11px] text-white transition-all hover:opacity-95 active:scale-[0.98] flex items-center justify-center gap-3 ${isLoading || isFetchingMeta ? 'opacity-70' : ''}`}
             style={{
-              borderRadius: '20px',
+              borderRadius: '16px',
               background: 'linear-gradient(180deg, #3457B4 0%, #243160 100%)',
               boxShadow: '0 15px 35px -10px rgba(52, 87, 180, 0.4)'
             }}

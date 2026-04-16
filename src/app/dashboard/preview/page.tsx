@@ -203,19 +203,21 @@ function PreviewContent() {
   }, [selectedPublikId, selectedElectionTitle]);
 
   return (
-    <div className="max-w-[1240px] mx-auto space-y-8 mb-20 px-4">
+    <div className="max-w-[1240px] mx-auto space-y-6 md:space-y-8 mb-20 px-4 pt-4">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-        <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-black text-[#101828] tracking-tight">
-            Live Preview : <span className="text-[#405189]">{selectedElectionTitle}</span>
+        <div className="space-y-4">
+          <h1 className="text-xl md:text-3xl font-black text-[#101828] tracking-tight leading-tight">
+            Live Preview : <span className="text-[#405189] block sm:inline">{selectedElectionTitle}</span>
           </h1>
           <div className="flex items-center gap-4">
              <Link 
                href={`/dashboard/election/voters?election=${selectedPublikId}`}
-               className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all"
+               className="group flex flex-col xs:flex-row xs:items-center gap-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all w-full xs:w-auto"
              >
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Turnout:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Turnout:</span>
+                </div>
                 <span className="text-sm font-black text-[#101828] group-hover:text-[#405189] transition-colors">
                     {turnoutText}
                 </span>
@@ -223,19 +225,24 @@ function PreviewContent() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5 min-w-[280px]">
+        <div className="flex flex-col gap-1.5 min-w-full md:min-w-[280px]">
            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Switch Election</label>
-           <select
-             value={selectedPublikId}
-             onChange={(e) => setSelectedPublikId(e.target.value)}
-             className="h-12 w-full appearance-none rounded-[20px] bg-white border border-gray-200 px-5 text-sm font-bold text-[#101828] shadow-sm focus:outline-none focus:border-[#405189] focus:ring-4 focus:ring-[#405189]/5 transition-all cursor-pointer"
-           >
-             {elections.map((item) => (
-               <option key={item.publik_id} value={item.publik_id}>
-                 {item.title}
-               </option>
-             ))}
-           </select>
+           <div className="relative">
+             <select
+               value={selectedPublikId}
+               onChange={(e) => setSelectedPublikId(e.target.value)}
+               className="h-12 w-full appearance-none rounded-[20px] bg-white border border-gray-200 px-5 text-sm font-bold text-[#101828] shadow-sm focus:outline-none focus:border-[#405189] focus:ring-4 focus:ring-[#405189]/5 transition-all cursor-pointer pr-10"
+             >
+               {elections.map((item) => (
+                 <option key={item.publik_id} value={item.publik_id}>
+                   {item.title}
+                 </option>
+               ))}
+             </select>
+             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+             </div>
+           </div>
         </div>
       </div>
 
@@ -263,27 +270,27 @@ function PreviewContent() {
           {positions.map((position, pIdx) => (
             <div
               key={`${position.title}-${pIdx}`}
-              className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100 flex flex-col xl:flex-row gap-12 lg:items-center relative overflow-hidden group/card"
+              className="bg-white rounded-[40px] p-6 sm:p-8 md:p-12 shadow-sm border border-gray-100 flex flex-col xl:flex-row gap-8 md:gap-12 lg:items-center relative overflow-hidden group/card"
             >
-              {/* Background Accents */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#F8FAFF] rounded-full -translate-y-1/2 translate-x-1/2 opacity-50 group-hover/card:scale-110 transition-transform duration-700" />
+              {/* Background Accents (Hidden on small mobile) */}
+              <div className="hidden sm:block absolute top-0 right-0 w-64 h-64 bg-[#F8FAFF] rounded-full -translate-y-1/2 translate-x-1/2 opacity-50 group-hover/card:scale-110 transition-transform duration-700" />
               
-              <div className="xl:w-[45%] flex flex-col gap-8 relative z-10">
+              <div className="xl:w-[45%] flex flex-col gap-6 md:gap-8 relative z-10 w-full text-center xl:text-left">
                 <div className="space-y-1">
-                   <h2 className="text-2xl md:text-3xl font-black text-[#101828] tracking-tight">{position.title}</h2>
-                   <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Position Results</p>
+                   <h2 className="text-xl md:text-3xl font-black text-[#101828] tracking-tight">{position.title}</h2>
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Position Results</p>
                 </div>
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center py-4">
                   <PieChart candidates={position.candidates} />
                 </div>
               </div>
 
-              <div className="xl:w-[55%] flex flex-col gap-6 relative z-10">
+              <div className="xl:w-[55%] flex flex-col gap-4 md:gap-6 relative z-10 w-full">
                 {position.candidates.map((cand, cIdx) => (
-                  <div key={`${cand.name}-${cIdx}`} className="bg-[#F8FAFF] p-6 rounded-[32px] border border-transparent hover:border-[#405189]/20 hover:bg-white hover:shadow-xl hover:shadow-[#405189]/5 transition-all duration-300 group/cand">
-                    <div className="flex items-center justify-between mb-4">
-                       <div className="flex items-center gap-4">
-                          <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md">
+                  <div key={`${cand.name}-${cIdx}`} className="bg-[#F8FAFF] p-4 sm:p-6 rounded-[28px] md:rounded-[32px] border border-transparent hover:border-[#405189]/20 hover:bg-white hover:shadow-xl hover:shadow-[#405189]/5 transition-all duration-300 group/cand">
+                    <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-4 mb-4">
+                       <div className="flex items-center gap-3 sm:gap-4">
+                          <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-white shadow-md">
                              <Image 
                                src={cand.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cand.name)}`} 
                                alt={cand.name} 
@@ -291,26 +298,29 @@ function PreviewContent() {
                                className="object-cover" 
                              />
                           </div>
-                          <div>
-                             <h3 className="text-base font-black text-[#101828] group-hover/cand:text-[#405189] transition-colors">{cand.name}</h3>
-                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-[#405189]">{cand.votes} votes</span>
-                                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                                <span className="text-xs font-bold text-gray-400 capitalize">Candidate</span>
+                          <div className="min-w-0">
+                             <h3 className="text-sm sm:text-base font-black text-[#101828] group-hover/cand:text-[#405189] transition-colors truncate">{cand.name}</h3>
+                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+                                <span className="text-[10px] sm:text-xs font-black text-[#405189] whitespace-nowrap">{cand.votes} votes</span>
+                                <span className="hidden xs:block w-1 h-1 rounded-full bg-gray-300" />
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-400 capitalize">Candidate</span>
                              </div>
                           </div>
                        </div>
-                       <div className="text-right">
-                          <p className="text-xl font-black text-[#101828] leading-none mb-1">{Math.round(cand.percentage)}%</p>
-                          <div className={`h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden ml-auto`}>
-                             <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${cand.percentage}%`, backgroundColor: cand.color }} />
+                       <div className="flex items-center justify-between xs:justify-end xs:flex-col xs:items-end gap-2 xs:gap-0 bg-white/50 xs:bg-transparent p-2 xs:p-0 rounded-xl xs:rounded-none">
+                          <span className="xs:hidden text-[9px] font-black text-gray-400 uppercase tracking-widest">Share %</span>
+                          <div className="flex flex-col items-end">
+                            <p className="text-lg sm:text-xl font-black text-[#101828] leading-none mb-1">{Math.round(cand.percentage)}%</p>
+                            <div className={`h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden hidden xs:block`}>
+                               <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${cand.percentage}%`, backgroundColor: cand.color }} />
+                            </div>
                           </div>
                        </div>
                     </div>
 
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-white">
+                    <div className="h-2 w-full bg-gray-100/50 rounded-full overflow-hidden border border-white relative">
                       <div
-                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,0,0,0.05)]"
                         style={{ width: `${cand.percentage}%`, backgroundColor: cand.color }}
                       />
                     </div>

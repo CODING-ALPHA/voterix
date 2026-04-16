@@ -331,14 +331,14 @@ export default function VotersRegistryPage() {
            </div>
 
            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative group flex-1 sm:flex-initial">
-                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#405189]" />
-                 <input 
-                    type="text" value={search} onChange={e => setSearch(e.target.value)}
-                    placeholder="Search registry..."
-                    className="h-12 w-full sm:w-[240px] md:w-[320px] pl-11 pr-4 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-[#101828] placeholder:text-gray-400 focus:outline-none focus:border-[#405189] transition-all" 
-                 />
-              </div>
+                <div className="relative group flex-1">
+                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#405189]" />
+                  <input 
+                     type="text" value={search} onChange={e => setSearch(e.target.value)}
+                     placeholder="Search registry..."
+                     className="h-12 w-full md:w-[320px] pl-11 pr-4 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-[#101828] placeholder:text-gray-400 focus:outline-none focus:border-[#405189] transition-all shadow-sm" 
+                  />
+               </div>
               
               <div className="flex flex-row items-center gap-3">
                 {view === "voters" && (
@@ -408,28 +408,29 @@ export default function VotersRegistryPage() {
                          ))}
                       </div>
                       
-                      {/* Pagination UI */}
-                      <div className="mt-8 px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            Page {pagination.current_page} of {pagination.total_pages || 1}
-                         </p>
-                         <div className="flex gap-2">
-                            <button 
-                              disabled={!pagination.has_prev}
-                              onClick={() => handlePageChange(pagination.current_page - 1)}
-                              className="h-9 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                               Prev
-                            </button>
-                            <button 
-                              disabled={!pagination.has_next}
-                              onClick={() => handlePageChange(pagination.current_page + 1)}
-                              className="h-9 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                               Next
-                            </button>
-                         </div>
-                      </div>
+                      {pagination.total_pages > 1 && (
+                       <div className="px-6 sm:px-8 py-6 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center sm:text-left">
+                             Page {pagination.current_page} of {pagination.total_pages || 1} ({pagination.total_count} records)
+                          </p>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                             <button 
+                               disabled={!pagination.has_prev}
+                               onClick={() => handlePageChange(pagination.current_page - 1)}
+                               className="flex-1 sm:flex-none h-10 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                             >
+                                Previous
+                             </button>
+                             <button 
+                               disabled={!pagination.has_next}
+                               onClick={() => handlePageChange(pagination.current_page + 1)}
+                               className="flex-1 sm:flex-none h-10 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                             >
+                                Next
+                             </button>
+                          </div>
+                       </div>
+                    )}
                     </>
                  )}
               </div>
