@@ -105,9 +105,9 @@ function PreviewContent() {
                     <div key={cIdx} className="flex flex-col gap-4">
                       
                       {/* Header: Info & Votes */}
-                      <div className="flex items-center justify-between px-1">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md relative shrink-0 bg-gray-50">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-white shadow-md relative shrink-0 bg-gray-50">
                             {candidate.image ? (
                               <Image 
                                 src={candidate.image}
@@ -116,27 +116,27 @@ function PreviewContent() {
                                 className="object-cover"
                               />
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-300">
+                              <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-300 text-[10px] md:text-sm">
                                 {candidate.name.substring(0, 2).toUpperCase()}
                               </div>
                             )}
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-[#FF4D4C] uppercase tracking-[0.2em] mb-0.5">Candidate</span>
-                            <span className="text-base font-black text-[#101828] uppercase tracking-tight">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] md:text-xs font-black text-[#FF4D4C] uppercase tracking-[0.2em] mb-0.5">Candidate</span>
+                            <span className="text-sm md:text-base font-black text-[#101828] uppercase tracking-tight truncate">
                               {candidate.name}
                             </span>
                           </div>
                         </div>
                         
-                        <div className="flex flex-col items-end">
-                          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">Votes</span>
+                        <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end bg-gray-50/50 sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-gray-100">
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest sm:mb-0.5">Votes</span>
                           <div className="flex items-center gap-3">
-                            <span className="text-base font-black text-gray-900 uppercase">
+                            <span className="text-xs md:text-base font-black text-gray-900 uppercase">
                               {candidate.votes} VOTES
                             </span>
                             <div className="h-4 w-px bg-zinc-200" />
-                            <span className="text-base font-black text-[#3457B4]">
+                            <span className="text-sm md:text-base font-black text-[#3457B4]">
                               {candidate.percent}%
                             </span>
                           </div>

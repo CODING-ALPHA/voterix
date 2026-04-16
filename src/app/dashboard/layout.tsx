@@ -85,8 +85,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar (Desktop & Mobile Drawer) */}
       <aside className={`
-        fixed inset-y-0 left-0 z-[70] w-[260px] bg-[#243160] text-white flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        fixed inset-y-0 left-0 z-[70] w-[280px] bg-[#243160] text-white flex flex-col transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) lg:static lg:translate-x-0
+        ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}
       `}>
         {/* Logo */}
         <div className="flex h-[120px] items-center justify-between px-6 relative">
