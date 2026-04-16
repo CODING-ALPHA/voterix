@@ -776,20 +776,20 @@ export default function AddElectionPage() {
           /* STEP 2: Positions & Candidates */
           <div className="space-y-10">
             {positions.map((pos, idx) => (
-              <div key={pos.id} className="space-y-5 pb-6 border-b border-gray-200 last:border-0 last:pb-0">
+              <div key={pos.id} className="space-y-6 pb-8 border-b border-gray-100 last:border-0 last:pb-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Position {idx + 1}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 tracking-tight">Position {idx + 1}</h3>
                   <button 
                     onClick={() => removePosition(pos.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-gray-900 font-medium text-xs">Position Title *</label>
+                  <div className="space-y-2">
+                    <label className="text-gray-900 font-bold text-[10px] uppercase tracking-widest pl-1">Position Title *</label>
                     <input
                       type="text"
                       value={pos.title}
@@ -799,11 +799,11 @@ export default function AddElectionPage() {
                         setPositions(newPos);
                       }}
                       placeholder="e.g. President"
-                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-500"
+                      className="w-full bg-slate-50 border border-transparent h-12 px-4 rounded-2xl text-sm font-bold text-[#101828] focus:bg-white focus:border-[#405189] transition-all"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-gray-900 font-medium text-xs">Description</label>
+                  <div className="space-y-2">
+                    <label className="text-gray-900 font-bold text-[10px] uppercase tracking-widest pl-1">Description (Optional)</label>
                     <input
                       type="text"
                       value={pos.description}
@@ -812,67 +812,85 @@ export default function AddElectionPage() {
                         newPos[idx].description = e.target.value;
                         setPositions(newPos);
                       }}
-                      placeholder="e.g. The lead executive of the association"
-                      className="w-full bg-white border border-gray-300 h-10 px-3 rounded-lg text-sm focus:outline-none focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-500"
+                      placeholder="Role of the officer..."
+                      className="w-full bg-slate-50 border border-transparent h-12 px-4 rounded-2xl text-sm font-bold text-[#101828] focus:bg-white focus:border-[#405189] transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                   <div className="flex items-center justify-between">
-                     <h4 className="font-semibold text-gray-500 text-xs uppercase tracking-wider">Candidates ({pos.candidates.length})</h4>
+                <div className="space-y-4 pt-2">
+                   <div className="flex items-center justify-between px-1">
+                     <h4 className="font-black text-[#405189]/60 text-[10px] uppercase tracking-widest">Candidates ({pos.candidates.length})</h4>
                      <button 
                        onClick={() => addCandidate(pos.id)}
-                       className="flex items-center gap-1.5 text-gray-900 font-semibold text-xs hover:text-[#405189] transition-colors"
+                       className="flex items-center gap-1.5 text-[#405189] font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 px-3 py-1.5 rounded-xl transition-all"
                      >
                        <UserPlus size={16} />
                        Add Candidate
                      </button>
                    </div>
 
-                   <div className="space-y-2.5">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {pos.candidates.map((cand, cIdx) => (
-                       <div key={cand.id} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-gray-50/50 p-2 md:p-3 rounded-lg border border-gray-200/50">
-                         <div className="flex items-center gap-3 flex-1">
-                           <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-[#405189] font-bold text-xs shrink-0">
-                             {cIdx + 1}
-                           </div>
-                           <input
-                             type="text"
-                             value={cand.name}
-                             onChange={(e) => {
-                               const newPos = [...positions];
-                               newPos[idx].candidates[cIdx].name = e.target.value;
-                               setPositions(newPos);
-                             }}
-                             placeholder="e.g. Ojedokun Olaniyi"
-                             className="flex-1 bg-white border border-gray-300 h-9 px-3 rounded-lg text-sm focus:outline-none text-gray-900 font-medium placeholder:text-gray-500"
-                           />
-                         </div>
-                         <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
-                           <label className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 h-9 px-3 bg-white border border-gray-300 rounded-lg text-gray-500 font-semibold hover:border-gray-400 transition-all cursor-pointer">
-                             <Upload size={14} />
-                             <span className="text-xs">{cand.image ? cand.image.name.substring(0, 10) + "..." : "Upload Photo"}</span>
-                             <input 
-                               type="file" 
-                               className="hidden" 
-                               accept="image/*"
-                               onChange={(e) => {
-                                 if (e.target.files && e.target.files[0]) {
-                                   const newPos = [...positions];
-                                   newPos[idx].candidates[cIdx].image = e.target.files[0];
-                                   setPositions(newPos);
-                                 }
-                               }}
-                             />
-                           </label>
-                           <button 
-                             onClick={() => removeCandidate(pos.id, cand.id)}
-                             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                           >
-                             <Trash2 size={14} />
-                           </button>
-                         </div>
+                       <div key={cand.id} className="relative bg-[#FBFCFE] p-5 rounded-[24px] border border-gray-100/60 shadow-sm space-y-4">
+                          <div className="flex items-center justify-between mb-2">
+                             <div className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[9px] font-black text-[#405189] uppercase tracking-widest shadow-sm">
+                                Candidate {cIdx + 1}
+                             </div>
+                             {pos.candidates.length > 1 && (
+                                <button 
+                                  onClick={() => removeCandidate(pos.id, cand.id)}
+                                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                             )}
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <input
+                              type="text"
+                              value={cand.name}
+                              onChange={(e) => {
+                                const newPos = [...positions];
+                                newPos[idx].candidates[cIdx].name = e.target.value;
+                                setPositions(newPos);
+                              }}
+                              placeholder="Full Name"
+                              className="w-full h-11 px-4 bg-white border border-gray-100 rounded-xl text-sm font-bold text-[#101828] focus:border-[#405189] transition-all"
+                            />
+
+                            <textarea
+                              value={cand.bio}
+                              onChange={(e) => {
+                                const newPos = [...positions];
+                                newPos[idx].candidates[cIdx].bio = e.target.value;
+                                setPositions(newPos);
+                              }}
+                              placeholder="Short manifesto..."
+                              rows={2}
+                              className="w-full p-4 bg-white border border-gray-100 rounded-xl text-xs font-semibold text-gray-500 focus:border-[#405189] transition-all resize-none"
+                            />
+                            
+                            <label className="flex items-center justify-center gap-2 h-11 px-4 bg-white border border-gray-100 rounded-xl text-xs font-bold text-gray-400 hover:text-[#405189] hover:border-[#405189] transition-all cursor-pointer">
+                               <Upload size={14} />
+                               <span className="truncate max-w-[150px] uppercase tracking-widest font-black text-[9px]">
+                                 {cand.image ? cand.image.name : "Upload Candidate Photo"}
+                               </span>
+                               <input 
+                                 type="file" 
+                                 className="hidden" 
+                                 accept="image/*"
+                                 onChange={(e) => {
+                                   if (e.target.files && e.target.files[0]) {
+                                     const newPos = [...positions];
+                                     newPos[idx].candidates[cIdx].image = e.target.files[0];
+                                     setPositions(newPos);
+                                   }
+                                 }}
+                               />
+                            </label>
+                          </div>
                        </div>
                      ))}
                    </div>
@@ -880,30 +898,27 @@ export default function AddElectionPage() {
               </div>
             ))}
 
-            <div className="flex justify-end pt-1">
-              <button 
-                onClick={addPosition}
-                className="flex items-center gap-1.5 border border-[#405189] text-[#405189] h-9 px-4 rounded-lg font-semibold hover:bg-blue-50 transition-all shadow-sm text-xs"
-              >
-                <Plus size={14} strokeWidth={2} />
-                Add Position
-              </button>
-            </div>
+            <button
+               onClick={addPosition}
+               className="w-full h-14 bg-[#F1F4FF] text-[#405189] rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-[#E5EEFF] transition-all border-2 border-dashed border-[#C7D7FE]"
+            >
+               <Plus size={20} /> Add Another Position
+            </button>
 
-            <div className="flex items-center justify-center gap-4 pt-8">
-              <button
-                onClick={() => setStep(1)}
-                className="h-10 px-8 rounded-lg border border-gray-300 font-semibold text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isLoading}
-                className={`h-10 px-8 rounded-lg bg-[#405189] text-white font-medium hover:opacity-90 transition-all shadow-md text-sm ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {isLoading ? "Saving..." : "Save Election"}
-              </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-10 border-t border-gray-100">
+               <button 
+                 onClick={() => setStep(1)}
+                 className="w-full sm:w-auto h-12 px-12 rounded-2xl font-bold text-gray-500 hover:bg-gray-50 transition-all text-sm"
+               >
+                 Back
+               </button>
+               <button 
+                 onClick={handleSave} 
+                 disabled={isLoading}
+                 className="w-full sm:w-auto h-12 px-14 bg-[#405189] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:opacity-95 transition-all active:scale-95 disabled:opacity-50 text-sm"
+               >
+                 {isLoading ? "Saving Data..." : "Finalize & Launch"}
+               </button>
             </div>
           </div>
         )}

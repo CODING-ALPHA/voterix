@@ -141,34 +141,35 @@ function DashboardContent() {
           </span>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-12">
-          <div className="flex flex-1 gap-4 md:gap-8 justify-center lg:justify-start">
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+          <div className="w-full grid grid-cols-2 sm:flex sm:flex-row flex-1 gap-4 md:gap-8 justify-items-center justify-center lg:justify-start">
             {units.map(({ label, value, max }) => (
               <div key={label} className="flex flex-col items-center">
-                <CircleProgress value={value} max={max || 1} size={100} strokeWidth={6} color={ringColor}>
-                  <span className="text-white text-2xl font-bold leading-none">
+                <CircleProgress value={value} max={max || 1} size={90} strokeWidth={5} color={ringColor}>
+                  <span className="text-white text-xl md:text-2xl font-black leading-none tracking-tighter">
                     {value}
                   </span>
-                  <span className="text-[#adb5bd] text-[10px] mt-1 font-medium">{label}</span>
+                  <span className="text-[#adb5bd] text-[8px] md:text-[10px] mt-1 font-bold uppercase tracking-widest">{label}</span>
                 </CircleProgress>
               </div>
             ))}
           </div>
 
-          <div className="hidden lg:block w-px h-20 bg-white/20 mx-4" />
+          <div className="hidden lg:block w-px h-16 bg-white/10 mx-2" />
 
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center pt-6 lg:pt-0 border-t lg:border-t-0 border-white/10 w-full lg:w-auto">
+            <span className="lg:hidden text-[9px] font-black text-[#adb5bd] uppercase tracking-widest mb-4">Total Turnout</span>
             <CircleProgress 
                 value={ballot?.total_voted || ballot?.turnout?.total_voted || 0} 
                 max={ballot?.total_eligible || ballot?.turnout?.total_eligible || meta?.total_eligible_voters || 100} 
-                size={100} 
-                strokeWidth={6} 
-                color={ringColor}
+                size={90} 
+                strokeWidth={5} 
+                color="#FE9431"
             >
-              <span className="text-white text-2xl font-bold leading-none">
+              <span className="text-white text-xl md:text-2xl font-black leading-none">
                 {ballot?.total_voted || ballot?.turnout?.total_voted || 0}
               </span>
-              <span className="text-[#adb5bd] text-[10px] mt-1 font-medium">
+              <span className="text-[#adb5bd] text-[8px] md:text-[10px] mt-1 font-bold">
                 /{ballot?.total_eligible || ballot?.turnout?.total_eligible || meta?.total_eligible_voters || "?"}
               </span>
             </CircleProgress>

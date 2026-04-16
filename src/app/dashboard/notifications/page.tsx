@@ -77,39 +77,44 @@ export default function NotificationsPage() {
           </div>
         ) : (
           /* Notifications List */
-          <div className="flex flex-col p-6 md:p-10 space-y-4">
+          <div className="flex flex-col p-4 md:p-8 space-y-4">
             {notifications.map((notification) => (
               <div 
                 key={notification.uid}
                 onClick={() => handleNotificationClick(notification)}
-                className={`flex items-center gap-4 md:gap-8 p-4 md:px-6 rounded-lg border transition-all cursor-pointer ${
+                className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-4 md:px-8 rounded-2xl border transition-all cursor-pointer ${
                   notification.is_read 
-                    ? "bg-white border-gray-200 hover:bg-gray-50/50" 
-                    : "bg-blue-50/30 border-blue-100 shadow-sm"
+                    ? "bg-white border-gray-100 hover:bg-gray-50/50" 
+                    : "bg-blue-50/20 border-blue-50 shadow-sm ring-1 ring-blue-500/5"
                 }`}
               >
-                {/* Icon */}
-                <div className={`flex-shrink-0 ${notification.is_read ? "text-gray-400" : "text-blue-600"}`}>
-                  <Star size={20} strokeWidth={notification.is_read ? 1.5 : 2} fill={notification.is_read ? "none" : "currentColor"} />
-                </div>
-                
-                {/* Sender/Title */}
-                <div className="flex-shrink-0 w-20 md:w-32">
-                  <span className={`text-sm tracking-wide ${notification.is_read ? "font-medium text-gray-900" : "font-bold text-gray-900"}`}>
-                    {notification.title}
-                  </span>
-                </div>
-                
-                {/* Message Content */}
-                <div className="flex-1 truncate">
-                  <span className={`text-sm ${notification.is_read ? "font-medium text-gray-500" : "font-semibold text-gray-900"}`}>
-                    {notification.message}
-                  </span>
+                <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                  {/* Icon */}
+                  <div className={`flex-shrink-0 mt-1 sm:mt-0 ${notification.is_read ? "text-gray-300" : "text-blue-500"}`}>
+                    <Star size={18} strokeWidth={notification.is_read ? 1.5 : 2.5} fill={notification.is_read ? "none" : "currentColor"} />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 md:gap-8">
+                    {/* Sender/Title */}
+                    <div className="flex-shrink-0 sm:w-28 md:w-40 lg:w-48">
+                      <span className={`text-xs md:text-sm tracking-tight truncate block ${notification.is_read ? "font-medium text-gray-400" : "font-black text-[#101828]"}`}>
+                        {notification.title}
+                      </span>
+                    </div>
+                    
+                    {/* Message Content */}
+                    <div className="flex-1 truncate">
+                      <span className={`text-[11px] md:text-sm truncate block ${notification.is_read ? "font-medium text-gray-400" : "font-bold text-[#101828]/80"}`}>
+                        {notification.message}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Time */}
-                <div className="flex-shrink-0 ml-auto">
-                  <span className={`text-sm ${notification.is_read ? "font-medium text-gray-500" : "font-semibold text-gray-700"}`}>
+                <div className="flex-shrink-0 flex sm:block items-center justify-between mt-2 sm:mt-0 border-t sm:border-t-0 border-gray-50 pt-2 sm:pt-0">
+                  <span className="sm:hidden text-[9px] font-black text-gray-300 uppercase tracking-widest">Received</span>
+                  <span className={`text-[10px] md:text-xs tracking-tighter sm:tracking-normal ${notification.is_read ? "font-bold text-gray-300" : "font-black text-blue-600"}`}>
                     {formatTime(notification.created_at)}
                   </span>
                 </div>

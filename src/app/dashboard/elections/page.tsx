@@ -62,13 +62,17 @@ export default function ElectionsPage() {
   };
 
   const handleCopyLink = (election: any) => {
-    const baseUrl = window.location.origin;
-    // Format: /student/login?assoc=ASSOC_ID&election=ELECT_ID
-    const link = `${baseUrl}/student/login?assoc=${user?.publik_id}&election=${election.publik_id}`;
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const assocId = user?.publik_id || "NOT_LOGGED_IN";
     
-    navigator.clipboard.writeText(link);
-    setCopiedId(election.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    // Format: /student/login?assoc=ASSOC_ID&election=ELECT_ID
+    const link = `${baseUrl}/student/login?assoc=${assocId}&election=${election.publik_id}`;
+    
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(link);
+      setCopiedId(election.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
   };
 
   return (

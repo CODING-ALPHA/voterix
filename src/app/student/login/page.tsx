@@ -160,18 +160,18 @@ function LoginContent() {
       </div>
 
       {/* Mode Toggle */}
-      <div className="bg-gray-50 p-1.5 rounded-2xl mb-10 flex gap-2 relative z-10">
+      <div className="bg-gray-50/80 p-1 md:p-1.5 rounded-2xl mb-8 md:mb-10 flex gap-1 md:gap-2 relative z-10 border border-gray-100">
         <button
           onClick={() => setLoginMode("otp")}
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMode === 'otp' ? 'bg-white text-[#3457B4] shadow-sm ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`flex-1 py-2.5 md:py-3 rounded-[14px] text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${loginMode === 'otp' ? 'bg-white text-[#3457B4] shadow-md shadow-blue-500/5 ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-500 hover:bg-white/50'}`}
         >
-          OTP Verification
+          Verification
         </button>
         <button
           onClick={() => setLoginMode("pin")}
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${loginMode === 'pin' ? 'bg-white text-[#3457B4] shadow-sm ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`flex-1 py-2.5 md:py-3 rounded-[14px] text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${loginMode === 'pin' ? 'bg-white text-[#3457B4] shadow-md shadow-blue-500/5 ring-1 ring-zinc-100' : 'text-gray-400 hover:text-gray-500 hover:bg-white/50'}`}
         >
-          Login with PIN
+          Login PIN
         </button>
       </div>
 
