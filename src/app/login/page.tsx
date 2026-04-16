@@ -79,7 +79,7 @@ export default function Login() {
                   setPassword(e.target.value);
                   if (formError) setFormError(null);
                 }}
-                placeholder="********"
+                placeholder="Enter your password"
                 required
                 className="w-full h-12 px-4 rounded-lg border border-zinc-200 bg-white text-gray-900 text-sm font-medium placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />

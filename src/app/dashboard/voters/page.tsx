@@ -257,11 +257,31 @@ export default function VotersRegistryPage() {
     setVoterMenu({ id: null, x: 0, y: 0 });
   };
 
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const filteredVoters = useMemo(() => {
+    let result = voters;
     const term = search.toLowerCase();
-    if (!term) return voters;
-    return voters.filter(v => [v.name, v.matric, v.email, v.phone].join(" ").toLowerCase().includes(term));
-  }, [voters, search]);
+    
+    if (term) {
+      result = result.filter(v => [v.name, v.matric, v.email, v.phone].join(" ").toLowerCase().includes(term));
+    }
+
+    if (statusFilter !== "all") {
+      result = result.filter(v => v.status.toLowerCase() === statusFilter.toLowerCase());
+    }
+
+    return result;
+  }, [voters, search, statusFilter]);
+
+  const totalPages = Math.ceil(filteredVoters.length / itemsPerPage);
+  const currentVoters = filteredVoters.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6">
@@ -277,7 +297,7 @@ export default function VotersRegistryPage() {
                   {view === "batches" ? "Voter Registry" : selectedBatch?.name}
                 </h1>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                   {view === "batches" ? "Association Database" : "Total: " + voters.length + " Voters"}
+                   {view === "batches" ? "Association Database" : "Total: " + filteredVoters.length + " Match"}
                 </p>
              </div>
           </div>
@@ -291,6 +311,20 @@ export default function VotersRegistryPage() {
                    className="h-12 w-[240px] md:w-[320px] pl-11 pr-4 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-[#101828] placeholder:text-gray-400 focus:outline-none focus:border-[#405189] transition-all" 
                 />
              </div>
+             
+             {view === "voters" && (
+                <select 
+                  value={statusFilter} 
+                  onChange={e => setStatusFilter(e.target.value)}
+                  className="h-12 px-4 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 focus:outline-none focus:border-[#405189] cursor-pointer"
+                >
+                   <option value="all">All Status</option>
+                   <option value="verified">Verified</option>
+                   <option value="pending">Pending</option>
+                   <option value="rejected">Rejected</option>
+                </select>
+             )}
+
              {view === "batches" && (
                 <button onClick={() => setIsUploadModalOpen(true)} className="h-12 px-6 bg-[#243160] text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-[#243160]/10 hover:opacity-95 transition-all active:scale-95">
                    <Plus size={18} /> Import CSV
@@ -304,7 +338,7 @@ export default function VotersRegistryPage() {
           </div>
        </div>
 
-       <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden min-h-[500px]">
+       <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
           {isLoading ? (
              <div className="h-[500px] flex items-center justify-center font-bold text-gray-400 uppercase tracking-widest animate-pulse">
                 Loading Registry...
@@ -344,63 +378,95 @@ export default function VotersRegistryPage() {
                 )}
              </div>
           ) : (
-             <div className="overflow-x-auto min-h-[400px]">
-                <table className="w-full text-left border-collapse">
-                   <thead>
-                      <tr className="border-b border-gray-50 text-[11px] font-black text-gray-400 uppercase tracking-widest">
-                         <th className="px-8 py-5">Full Name</th>
-                         <th className="px-6 py-5">Matric No</th>
-                         <th className="px-6 py-5">Email Address</th>
-                         <th className="px-6 py-5">WhatsApp</th>
-                         <th className="px-6 py-5">Status</th>
-                         <th className="px-8 py-5"></th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-gray-50">
-                      {filteredVoters.map(voter => (
-                         <tr key={voter.id} className="group hover:bg-[#F8F9FB] transition-colors relative">
-                            <td className="px-8 py-4 font-black text-sm text-[#101828] group-hover:text-[#405189]">{voter.name}</td>
-                            <td className="px-6 py-4 font-mono text-xs text-gray-500 tracking-tight">{voter.matric}</td>
-                            <td className="px-6 py-4 text-xs font-semibold text-gray-600">{voter.email}</td>
-                            <td className="px-6 py-4 text-xs font-bold text-gray-400">{voter.phone}</td>
-                            <td className="px-6 py-4">
-                               <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${voter.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                  {voter.status}
-                               </span>
-                            </td>
-                            <td className="px-8 py-4 text-right relative">
-                               <button 
-                                 onClick={(e) => {
-                                   const rect = e.currentTarget.getBoundingClientRect();
-                                   setVoterMenu(prev => prev.id === voter.id ? { id: null, x: 0, y: 0 } : { id: voter.id, x: rect.left - 120, y: rect.top + 30 });
-                                 }}
-                                 className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors"
-                               >
-                                  <MoreHorizontal size={18} />
-                               </button>
-
-                               {voterMenu.id === voter.id && (
-                                  <>
-                                    <div className="fixed inset-0 z-[60]" onClick={() => setVoterMenu({ id: null, x: 0, y: 0 })} />
-                                    <div 
-                                      className="fixed z-[70] w-36 bg-white border border-gray-100 shadow-xl rounded-2xl py-2 animate-in fade-in zoom-in-95 duration-100"
-                                      style={{ left: voterMenu.x, top: voterMenu.y }}
-                                    >
-                                       <button onClick={() => openEditModal(voter)} className="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-gray-600">
-                                          <Pencil size={14} /> Edit
-                                       </button>
-                                       <button onClick={() => handleDeleteVoter(voter.id)} className="w-full px-4 py-2 hover:bg-red-50 flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-red-600">
-                                          <Trash2 size={14} /> Delete
-                                       </button>
-                                    </div>
-                                  </>
-                               )}
-                            </td>
-                         </tr>
-                      ))}
-                   </tbody>
-                </table>
-             </div>
+             <>
+               <div className="overflow-x-auto flex-1">
+                  <table className="w-full text-left border-collapse">
+                     <thead>
+                        <tr className="border-b border-gray-50 text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                           <th className="px-8 py-5">Full Name</th>
+                           <th className="px-6 py-5">Matric No</th>
+                           <th className="px-6 py-5">Email Address</th>
+                           <th className="px-6 py-5">WhatsApp</th>
+                           <th className="px-6 py-5">Status</th>
+                           <th className="px-8 py-5"></th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-50">
+                        {currentVoters.map(voter => (
+                           <tr key={voter.id} className="group hover:bg-[#F8F9FB] transition-colors relative">
+                              <td className="px-8 py-4 font-black text-sm text-[#101828] group-hover:text-[#405189]">{voter.name}</td>
+                              <td className="px-6 py-4 font-mono text-xs text-gray-500 tracking-tight">{voter.matric}</td>
+                              <td className="px-6 py-4 text-xs font-semibold text-gray-600">{voter.email}</td>
+                              <td className="px-6 py-4 text-xs font-bold text-gray-400">{voter.phone}</td>
+                              <td className="px-6 py-4">
+                                 <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${voter.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                    {voter.status}
+                                 </span>
+                              </td>
+                              <td className="px-8 py-4 text-right relative">
+                                 <button 
+                                   onClick={(e) => {
+                                     const rect = e.currentTarget.getBoundingClientRect();
+                                     setVoterMenu(prev => prev.id === voter.id ? { id: null, x: 0, y: 0 } : { id: voter.id, x: rect.left - 120, y: rect.top + 30 });
+                                   }}
+                                   className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors"
+                                 >
+                                    <MoreHorizontal size={18} />
+                                 </button>
+  
+                                 {voterMenu.id === voter.id && (
+                                    <>
+                                      <div className="fixed inset-0 z-[60]" onClick={() => setVoterMenu({ id: null, x: 0, y: 0 })} />
+                                      <div 
+                                        className="fixed z-[70] w-36 bg-white border border-gray-100 shadow-xl rounded-2xl py-2 animate-in fade-in zoom-in-95 duration-100"
+                                        style={{ left: voterMenu.x, top: voterMenu.y }}
+                                      >
+                                         <button onClick={() => openEditModal(voter)} className="w-full px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-gray-600">
+                                            <Pencil size={14} /> Edit
+                                         </button>
+                                         <button onClick={() => handleDeleteVoter(voter.id)} className="w-full px-4 py-2 hover:bg-red-50 flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-red-600">
+                                            <Trash2 size={14} /> Delete
+                                         </button>
+                                      </div>
+                                    </>
+                                 )}
+                              </td>
+                           </tr>
+                        ))}
+                        {currentVoters.length === 0 && (
+                           <tr>
+                              <td colSpan={6} className="py-20 text-center font-bold text-gray-400 uppercase tracking-widest">No voters matched your filter</td>
+                           </tr>
+                        )}
+                     </tbody>
+                  </table>
+               </div>
+               
+               {/* Pagination Footer */}
+               {totalPages > 1 && (
+                 <div className="px-8 py-6 border-t border-gray-50 flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredVoters.length)} of {filteredVoters.length} records
+                    </p>
+                    <div className="flex gap-2">
+                       <button 
+                         disabled={currentPage === 1}
+                         onClick={() => setCurrentPage(p => p - 1)}
+                         className="h-10 px-4 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
+                       >
+                          Previous
+                       </button>
+                       <button 
+                         disabled={currentPage === totalPages}
+                         onClick={() => setCurrentPage(p => p + 1)}
+                         className="h-10 px-4 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
+                       >
+                          Next
+                       </button>
+                    </div>
+                 </div>
+               )}
+             </>
           )}
        </div>
 
