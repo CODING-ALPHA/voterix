@@ -98,8 +98,8 @@ function mapVoter(raw: any): VoterRow {
     id: String(raw?.uid || raw?.id || raw?.voter_uid || ""),
     name: raw?.name || [raw?.first_name, raw?.last_name].filter(Boolean).join(" ") || "N/A",
     matric: raw?.matric_no || raw?.matric_number || "N/A",
-    email: raw?.email || "N/A",
-    phone: raw?.whatsapp_number || raw?.phone_number || "N/A",
+    email: raw?.email || "",
+    phone: raw?.whatsapp_number || raw?.phone_number || "",
     status: toTitleCase(String(raw?.eligibility_status || raw?.status || "pending")),
   };
 }
