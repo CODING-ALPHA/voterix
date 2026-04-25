@@ -16,7 +16,8 @@ import {
   Search,
   ChevronDown,
   Menu,
-  X as CloseIcon
+  X as CloseIcon,
+  ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { listNotifications, type Notification } from "@/lib/notifications.api";
@@ -108,6 +109,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {user?.is_staff && (
+            <Link
+              href="/super-admin"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg font-bold text-[#FE9431] bg-orange-50 mb-4 border border-orange-100 hover:bg-orange-100 transition-all"
+            >
+              <ShieldCheck size={18} />
+              <span className="text-sm">Super Admin Portal</span>
+            </Link>
+          )}
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));

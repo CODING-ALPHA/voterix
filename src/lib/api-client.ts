@@ -18,6 +18,7 @@ export {
   getRefreshToken,
   saveTokens,
   clearTokens,
+  getMediaUrl,
 } from "./api";
 
 // Auth

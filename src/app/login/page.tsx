@@ -21,8 +21,12 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const loggedInUser = await login(email, password);
+      if (loggedInUser.is_staff) {
+        router.push("/super-admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setFormError(err.message || "Login failed. Please check your credentials.");

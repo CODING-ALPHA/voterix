@@ -6,6 +6,7 @@ export interface Position {
   uid: string;
   title: string;
   description?: string;
+  show_live_results?: boolean;
 }
 
 export interface Candidate {
@@ -28,7 +29,7 @@ export function listPositions(electionPublikId: string) {
 /** Create a new position inside an election. */
 export function createPosition(
   electionPublikId: string,
-  payload: { title: string; description?: string }
+  payload: { title: string; description?: string; show_live_results?: boolean }
 ) {
   return apiFetch<{ status: string; data: Position }>(
     `/election/${electionPublikId}/positions/create/`,
@@ -46,7 +47,7 @@ export function getPosition(positionUid: string) {
 /** Update a position's title or description. */
 export function updatePosition(
   positionUid: string,
-  payload: { title?: string; description?: string }
+  payload: { title?: string; description?: string; show_live_results?: boolean }
 ) {
   return apiFetch(`/election/positions/${positionUid}/update/`, {
     method: "PATCH",

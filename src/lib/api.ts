@@ -125,19 +125,43 @@ export function formatApiErrorMessage(
   return fallback;
 }
 
+// ─── Formatting & Context Utilities ──────────────────────────────────────────
+
+export function getMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  
+  // If it's a relative URL from backend API (e.g. /media/images/profile.png)
+  let sanitizedUrl = url.startsWith('/') ? url : `/${url}`;
+  if (sanitizedUrl.startsWith('/media/media/')) {
+    sanitizedUrl = sanitizedUrl.replace('/media/media/', '/media/');
+  }
+  
+  const rootUrl = BASE_URL.split('/api')[0] || BASE_URL;
+  return `${rootUrl}${sanitizedUrl}`;
+}
+
 // ─── Token Helpers ────────────────────────────────────────────────────────────
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("access_token");
+  const token = localStorage.getItem("access_token");
+  if (!token || token === "undefined" || token === "null") return null;
+  return token;
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("refresh_token");
+  const token = localStorage.getItem("refresh_token");
+  if (!token || token === "undefined" || token === "null") return null;
+  return token;
 }
 
 export function saveTokens(tokens: { access: string; refresh: string }) {
+  if (!tokens?.access || !tokens?.refresh) {
+    console.warn("Attempted to save invalid tokens:", tokens);
+    return;
+  }
   localStorage.setItem("access_token", tokens.access);
   localStorage.setItem("refresh_token", tokens.refresh);
   // Keep cookie in sync for middleware
@@ -147,7 +171,8 @@ export function saveTokens(tokens: { access: string; refresh: string }) {
 export function clearTokens() {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
-  document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  // Clear the auth_token cookie by setting its expiration to the past
+  document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict";
 }
 
 // ─── API Error ────────────────────────────────────────────────────────────────
