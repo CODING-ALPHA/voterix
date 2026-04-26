@@ -8,6 +8,7 @@ export interface AssociationProfile {
   slug: string;
   publik_id: string;
   email: string;
+  is_staff: boolean;
   uploaded_elections: string;
   completed_elections: string;
   profile_picture?: string;

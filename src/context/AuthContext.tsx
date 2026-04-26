@@ -19,7 +19,7 @@ import type { AssociationProfile } from "@/lib/api-client";
 interface AuthContextType {
   user: AssociationProfile | null;
   accessToken: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AssociationProfile>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -37,18 +37,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
 
   // ── Fetch profile from API ──────────────────────────────────────────────────
-  const fetchProfile = async (token: string) => {
+  const fetchProfile = async (token: string): Promise<AssociationProfile> => {
     try {
       // Temporarily set the token in localStorage so apiFetch can pick it up
       localStorage.setItem("access_token", token);
       const res = await getProfile();
       setUser(res.data);
       setAccessToken(token);
+      return res.data;
     } catch (err) {
+      console.error("Auth fetchProfile failed:", err);
       // Token is invalid or expired — clear everything
       clearTokens();
       setUser(null);
       setAccessToken(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -56,19 +59,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ── Re-hydrate from localStorage on first load ─────────────────────────────
   useEffect(() => {
-    const stored = getAccessToken();
-    if (stored) {
-      fetchProfile(stored);
-    } else {
-      setIsLoading(false);
-    }
+    const initAuth = async () => {
+      const stored = getAccessToken();
+      if (stored) {
+        try {
+          await fetchProfile(stored);
+        } catch (err) {
+          // Re-hydration failed (e.g. expired token), handled by fetchProfile's catch
+          console.warn("Silent re-hydration failure:", err);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+    initAuth();
   }, []);
 
   // ── login ──────────────────────────────────────────────────────────────────
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<AssociationProfile> => {
     const res = await apiLogin({ email, password });
     saveTokens(res.data);
-    await fetchProfile(res.data.access);
+    return await fetchProfile(res.data.access);
   };
 
   // ── logout ─────────────────────────────────────────────────────────────────

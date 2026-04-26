@@ -15,7 +15,9 @@ import {
   X,
   Copy,
   Check,
-  CheckCircle2
+  CheckCircle2,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 // --- Sub-components ---
@@ -110,12 +112,12 @@ import { apiUpload, formatApiErrorMessage } from "@/lib/api-client";
 import AlertModal from "@/components/AlertModal";
 import { createCandidate, createPosition } from "@/lib/positions.api";
 import { listVoterBatches, VoterBatch } from "@/lib/voters.api";
-import { getProfile } from "@/lib/association.api";
+import { useAuth } from "@/context/AuthContext";
 
 // --- Sub-components ---
 // ... (SuccessModal remains same)
 
-type PickerType = "date" | "startTime" | "endTime";
+type PickerType = "startDate" | "endDate" | "startTime" | "endTime";
 
 type CalendarDay = {
   key: string;
@@ -188,6 +190,7 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, index) => padNumber(index));
 const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, index) => padNumber(index));
 
 export default function AddElectionPage() {
+  const { user } = useAuth();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const pickerContainerRef = React.useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(1);
@@ -202,9 +205,12 @@ export default function AddElectionPage() {
   
   // Form State - Step 1
   const [electionTitle, setElectionTitle] = useState("");
-  const [electionDate, setElectionDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [showLiveResults, setShowLiveResults] = useState(true);
+  const [showFinalResults, setShowFinalResults] = useState(true);
   const [spreadsheetFile, setSpreadsheetFile] = useState<File | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date();
@@ -213,7 +219,7 @@ export default function AddElectionPage() {
 
   // Form State - Step 2
   const [positions, setPositions] = useState([
-    { id: 1, title: "", description: "", candidates: [{ id: 1, name: "", bio: "", image: null as File | null }] }
+    { id: 1, title: "", description: "", show_live_results: true, candidates: [{ id: 1, name: "", bio: "", image: null as File | null }] }
   ]);
 
   const addPosition = () => {
@@ -221,6 +227,7 @@ export default function AddElectionPage() {
       id: Date.now(), 
       title: "", 
       description: "", 
+      show_live_results: true,
       candidates: [{ id: Date.now() + 1, name: "", bio: "", image: null }] 
     }]);
   };
@@ -274,26 +281,29 @@ export default function AddElectionPage() {
   React.useEffect(() => {
     const loadBatches = async () => {
       try {
-        const profile = await getProfile();
-        if (profile.data?.publik_id) {
-          const batches = await listVoterBatches(profile.data.publik_id);
+        if (user?.publik_id) {
+          const batches = await listVoterBatches(user.publik_id);
           setAvailableBatches(batches.data || []);
         }
       } catch (error) {
         console.error("Failed to load batches:", error);
       }
     };
-    loadBatches();
-  }, []);
+    if (user) {
+      loadBatches();
+    }
+  }, [user]);
 
   const todayIso = React.useMemo(() => {
     const now = new Date();
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
   }, []);
 
-  const handleDateSelect = (dateValue: string) => {
+  const handleDateSelect = (field: "startDate" | "endDate", dateValue: string) => {
     if (dateValue < todayIso) return;
-    setElectionDate(dateValue);
+    if (field === "startDate") setStartDate(dateValue);
+    else setEndDate(dateValue);
+    
     const [year, month] = dateValue.split("-").map(Number);
     setCalendarMonth(new Date(year, month - 1, 1));
     setOpenPicker(null);
@@ -324,13 +334,13 @@ export default function AddElectionPage() {
   };
 
   const handleNextStep = async () => {
-    if (!electionTitle || !electionDate || !startTime || !endTime) {
+    if (!electionTitle || !startDate || !endDate || !startTime || !endTime) {
       setAlert({ message: "Please fill in all election basic details", type: "warning" });
       return;
     }
 
-    if (startTime >= endTime) {
-      setAlert({ message: "End time must be after start time on the same day.", type: "warning" });
+    if (startDate > endDate || (startDate === endDate && startTime >= endTime)) {
+      setAlert({ message: "End time must be after start time.", type: "warning" });
       return;
     }
 
@@ -343,11 +353,14 @@ export default function AddElectionPage() {
     try {
       const formData = new FormData();
       formData.append("title", electionTitle);
-      const startIso = `${electionDate}T${startTime}:00Z`;
-      const endIso = `${electionDate}T${endTime}:00Z`;
+      const startIso = `${startDate}T${startTime}:00+01:00`;
+      const endIso = `${endDate}T${endTime}:00+01:00`;
       
       formData.append("start_time", startIso);
       formData.append("end_time", endIso);
+      formData.append("show_live_results", String(showLiveResults));
+      formData.append("show_final_results", String(showFinalResults));
+      
       if (spreadsheetFile) {
         formData.append("csv_file", spreadsheetFile);
       }
@@ -386,36 +399,43 @@ export default function AddElectionPage() {
     }
   };
 
-  const handleSave = async () => {
+    const handleSave = async () => {
     if (!publikId) return;
 
     setIsLoading(true);
     let successCount = 0;
     try {
-      // Loop through positions and candidates to create them
-      for (const pos of positions) {
-        if (!pos.title) continue;
-        
-        const posResult = await createPosition(publikId, {
-          title: pos.title,
-          description: pos.description,
-        });
-        
-        if (posResult.status === "success") {
-          const positionUid = posResult.data.uid;
-          successCount++;
-          
-          for (const cand of pos.candidates) {
-            if (!cand.name) continue;
-            await createCandidate(positionUid, {
-              name: cand.name,
-              bio: cand.bio,
-              image: cand.image || undefined,
-            });
+      // Create all positions in parallel
+      const positionPromises = positions
+        .filter((pos) => pos.title)
+        .map(async (pos) => {
+          const posResult = await createPosition(publikId, {
+            title: pos.title,
+            description: pos.description,
+            show_live_results: pos.show_live_results,
+          });
+
+          if (posResult.status === "success") {
+            const positionUid = posResult.data.uid;
+            successCount++;
+
+            // Create candidates for this position in parallel
+            const candidatePromises = pos.candidates
+              .filter((cand) => cand.name)
+              .map((cand) =>
+                createCandidate(positionUid, {
+                  name: cand.name,
+                  bio: cand.bio,
+                  image: cand.image || undefined,
+                })
+              );
+
+            await Promise.all(candidatePromises);
           }
-        }
-      }
-      
+        });
+
+      await Promise.all(positionPromises);
+
       if (successCount === 0 && positions.some(p => p.title)) {
          throw new Error("Failed to save any positions. Please check your data.");
       }
@@ -435,6 +455,94 @@ export default function AddElectionPage() {
     "absolute left-0 top-[calc(100%+0.5rem)] z-30 w-full rounded-2xl border border-[#D9E2F2] bg-white p-3 shadow-[0_18px_45px_-20px_rgba(36,49,96,0.35)]";
 
   const calendarDays = buildCalendarDays(calendarMonth);
+
+  const renderDatePicker = (field: "startDate" | "endDate", label: string, value: string) => {
+    return (
+      <div className="space-y-1.5 w-full bg-white relative z-20">
+        <label className="text-gray-900 font-medium text-xs">{label}</label>
+        <div className="relative">
+          <Calendar className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#667085]" size={17} />
+          <button
+            type="button"
+            onClick={() => setOpenPicker(openPicker === field ? null : field)}
+            className={pickerTriggerClassName}
+          >
+            <span className={value ? "text-[#101828]" : "text-[#98A2B3]"}>
+              {formatDisplayDate(value)}
+            </span>
+          </button>
+          <ChevronDown
+            className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#98A2B3] transition-transform ${
+              openPicker === field ? "rotate-180" : ""
+            }`}
+            size={17}
+          />
+          {openPicker === field && (
+            <div className={pickerPopoverClassName}>
+              <div className="mb-3 flex items-center justify-between px-1">
+                <button
+                  type="button"
+                  disabled={calendarMonth.getFullYear() === new Date().getFullYear() && calendarMonth.getMonth() === new Date().getMonth()}
+                  onClick={() =>
+                    setCalendarMonth(
+                      new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1)
+                    )
+                  }
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#405189] transition-colors hover:bg-[#EEF4FF] disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <p className="text-sm font-semibold text-[#243160]">
+                  {formatMonthLabel(calendarMonth)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCalendarMonth(
+                      new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1)
+                    )
+                  }
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#405189] transition-colors hover:bg-[#EEF4FF]"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+              <div className="mb-2 grid grid-cols-7 gap-1 text-center">
+                {WEEKDAY_LABELS.map((day) => (
+                  <span key={day} className="py-2 text-xs font-bold uppercase tracking-wide text-[#98A2B3]">{day}</span>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day) => {
+                  const isSelected = value === day.iso;
+                  const isPast = day.iso < todayIso;
+                  return (
+                    <button
+                      key={day.key}
+                      type="button"
+                      disabled={isPast}
+                      onClick={() => handleDateSelect(field, day.iso)}
+                      className={`flex h-10 items-center justify-center rounded-xl text-sm font-semibold transition-all ${
+                        isSelected
+                          ? "bg-[#3457B4] text-white shadow-sm"
+                          : isPast
+                          ? "text-[#D1D5DB] cursor-default opacity-40 hover:bg-transparent"
+                          : day.isCurrentMonth
+                          ? "text-[#243160] hover:bg-[#EEF4FF]"
+                          : "text-[#B8C2D7] hover:bg-[#F7F9FC]"
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderTimePicker = (
     field: "startTime" | "endTime",
@@ -538,104 +646,9 @@ export default function AddElectionPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-gray-900 font-medium text-xs">Date</label>
-              <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#667085]" size={17} />
-                <button
-                  type="button"
-                  onClick={() => setOpenPicker(openPicker === "date" ? null : "date")}
-                  className={pickerTriggerClassName}
-                >
-                  <span className={electionDate ? "text-[#101828]" : "text-[#98A2B3]"}>
-                    {formatDisplayDate(electionDate)}
-                  </span>
-                </button>
-                <ChevronDown
-                  className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#98A2B3] transition-transform ${
-                    openPicker === "date" ? "rotate-180" : ""
-                  }`}
-                  size={17}
-                />
-                {openPicker === "date" && (
-                  <div className={pickerPopoverClassName}>
-                    <div className="mb-3 flex items-center justify-between px-1">
-                      <button
-                        type="button"
-                        disabled={calendarMonth.getFullYear() === new Date().getFullYear() && calendarMonth.getMonth() === new Date().getMonth()}
-                        onClick={() =>
-                          setCalendarMonth(
-                            new Date(
-                              calendarMonth.getFullYear(),
-                              calendarMonth.getMonth() - 1,
-                              1
-                            )
-                          )
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-[#405189] transition-colors hover:bg-[#EEF4FF] disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <p className="text-sm font-semibold text-[#243160]">
-                        {formatMonthLabel(calendarMonth)}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCalendarMonth(
-                            new Date(
-                              calendarMonth.getFullYear(),
-                              calendarMonth.getMonth() + 1,
-                              1
-                            )
-                          )
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-[#405189] transition-colors hover:bg-[#EEF4FF]"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-
-                    <div className="mb-2 grid grid-cols-7 gap-1 text-center">
-                      {WEEKDAY_LABELS.map((day) => (
-                        <span
-                          key={day}
-                          className="py-2 text-xs font-bold uppercase tracking-wide text-[#98A2B3]"
-                        >
-                          {day}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1">
-                      {calendarDays.map((day) => {
-                        const isSelected = electionDate === day.iso;
-                        const isPast = day.iso < todayIso;
-
-                        return (
-                          <button
-                            key={day.key}
-                            type="button"
-                            disabled={isPast}
-                            onClick={() => handleDateSelect(day.iso)}
-                            className={`flex h-10 items-center justify-center rounded-xl text-sm font-semibold transition-all ${
-                              isSelected
-                                ? "bg-[#3457B4] text-white shadow-sm"
-                                : isPast
-                                ? "text-[#D1D5DB] cursor-default opacity-40 hover:bg-transparent"
-                                : day.isCurrentMonth
-                                ? "text-[#243160] hover:bg-[#EEF4FF]"
-                                : "text-[#B8C2D7] hover:bg-[#F7F9FC]"
-                            }`}
-                          >
-                            {day.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {renderDatePicker("startDate", "Start Date", startDate)}
+              {renderDatePicker("endDate", "End Date", endDate)}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -683,6 +696,46 @@ export default function AddElectionPage() {
                   />
                   {openPicker === "endTime" &&
                     renderTimePicker("endTime", "Select End Time", endTime)}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div 
+                onClick={() => setShowLiveResults(!showLiveResults)}
+                className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-start gap-4 ${
+                  showLiveResults ? "border-blue-600 bg-blue-50/50" : "border-gray-100 bg-gray-50/50 hover:border-gray-200"
+                }`}
+              >
+                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  showLiveResults ? "bg-blue-600 border-blue-600" : "border-gray-300"
+                }`}>
+                  {showLiveResults && <Check size={12} className="text-white" strokeWidth={3} />}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[#101828] font-bold text-xs uppercase tracking-wider">Show Live Results</p>
+                  <p className="text-gray-500 text-[10px] font-medium leading-relaxed">
+                    Allow voters to see real-time vote counts while the election is ongoing.
+                  </p>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setShowFinalResults(!showFinalResults)}
+                className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-start gap-4 ${
+                  showFinalResults ? "border-blue-600 bg-blue-50/50" : "border-gray-100 bg-gray-50/50 hover:border-gray-200"
+                }`}
+              >
+                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  showFinalResults ? "bg-blue-600 border-blue-600" : "border-gray-300"
+                }`}>
+                  {showFinalResults && <Check size={12} className="text-white" strokeWidth={3} />}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[#101828] font-bold text-xs uppercase tracking-wider">Show Final Results</p>
+                  <p className="text-gray-500 text-[10px] font-medium leading-relaxed">
+                    Display the winners immediately after the election ends.
+                  </p>
                 </div>
               </div>
             </div>
@@ -816,6 +869,28 @@ export default function AddElectionPage() {
                       className="w-full bg-slate-50 border border-transparent h-12 px-4 rounded-2xl text-sm font-bold text-[#101828] focus:bg-white focus:border-[#405189] transition-all"
                     />
                   </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                   <button
+                     type="button"
+                     onClick={() => {
+                       const newPos = [...positions];
+                       newPos[idx].show_live_results = !newPos[idx].show_live_results;
+                       setPositions(newPos);
+                     }}
+                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                       pos.show_live_results 
+                         ? "bg-blue-50 text-[#405189]" 
+                         : "bg-gray-100 text-gray-400"
+                     }`}
+                   >
+                     {pos.show_live_results ? <Eye size={14} /> : <EyeOff size={14} />}
+                     {pos.show_live_results ? "Live Results: ON" : "Live Results: OFF"}
+                   </button>
+                   <p className="text-xs text-gray-500 font-medium tracking-tight">
+                      {pos.show_live_results ? "Voters will see live vote counts for this position." : "Live counts will be hidden from voters for this position."}
+                   </p>
                 </div>
 
                 <div className="space-y-4 pt-2">

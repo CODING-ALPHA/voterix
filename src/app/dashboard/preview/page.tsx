@@ -17,10 +17,37 @@ type CandidateRow = {
 
 type PositionRow = {
   title: string;
+  uid: string;
+  show_live_results: boolean;
   candidates: CandidateRow[];
 };
 
 const COLORS = ["#243160", "#5E6993", "#94A3B8", "#B3C2DD", "#D7DFEE"];
+
+const Switch = ({ enabled, onChange, disabled, label, subLabel, activeColor = "bg-blue-600" }: any) => (
+  <div className="flex items-center gap-3">
+    <div className="flex flex-col min-w-[70px]">
+      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 opacity-80">{label}</span>
+      <span className={`text-[9px] font-bold ${enabled ? "text-[#405189]" : "text-gray-400"} transition-colors whitespace-nowrap`}>
+        {subLabel}
+      </span>
+    </div>
+    <button
+      type="button"
+      onClick={onChange}
+      disabled={disabled}
+      className={`relative inline-flex h-5 w-10 items-center rounded-full transition-all duration-300 focus:outline-none shadow-inner ${
+        enabled ? activeColor : "bg-gray-200"
+      } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105 active:scale-95"}`}
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out ${
+          enabled ? "translate-x-6" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  </div>
+);
 
 const PieChart = ({ candidates }: { candidates: CandidateRow[] }) => {
   const [hoveredCandidate, setHoveredCandidate] = useState<CandidateRow | null>(null);
@@ -134,6 +161,9 @@ function PreviewContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [turnoutData, setTurnoutData] = useState<{ percent: number; voted: number; eligible: number } | null>(null);
+  const [globalShowLive, setGlobalShowLive] = useState(true);
+  const [globalShowFinal, setGlobalShowFinal] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const selectedElectionTitle = useMemo(() => {
     const hit = elections.find((item) => item.publik_id === selectedPublikId);
@@ -180,6 +210,8 @@ function PreviewContent() {
 
           const mappedPositions = (data.positions || []).map((position: any) => ({
             title: String(position.title || "Position"),
+            uid: String(position.uid || ""),
+            show_live_results: !!position.show_live_results,
             candidates: (position.candidates || []).map((candidate: any, index: number) => ({
               name: String(candidate.name || "Candidate"),
               votes: Number(candidate.votes ?? candidate.vote_count ?? 0),
@@ -189,9 +221,11 @@ function PreviewContent() {
             })),
           }));
           setPositions(mappedPositions);
-          setElectionTitle(String(data.election_title || selectedElectionTitle || "Live Preview"));
+          setElectionTitle(String(data.election_title || data.title || selectedElectionTitle || "Live Preview"));
           setTurnoutText(`${percent}% (${voted} / ${eligible})`);
           setTurnoutData({ percent, voted, eligible });
+          setGlobalShowLive(!!data.show_live_results);
+          setGlobalShowFinal(!!data.show_final_results);
         }
       } catch (err) {
         setError(formatApiErrorMessage(err, "Could not load live preview."));
@@ -201,6 +235,48 @@ function PreviewContent() {
     };
     fetchPreview();
   }, [selectedPublikId, selectedElectionTitle]);
+
+  const handleToggleGlobal = async (field: "show_live_results" | "show_final_results") => {
+    if (!selectedPublikId) return;
+    setIsUpdating(true);
+    try {
+      const newValue = field === "show_live_results" ? !globalShowLive : !globalShowFinal;
+      const res = await apiFetch<any>(`/election/${selectedPublikId}/update/`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: newValue })
+      });
+      if (res.status === "success") {
+        if (field === "show_live_results") setGlobalShowLive(newValue);
+        else setGlobalShowFinal(newValue);
+      }
+    } catch (err) {
+      console.error("Failed to update election visibility:", err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleTogglePosition = async (posIdx: number) => {
+    const pos = positions[posIdx];
+    if (!pos.uid) return;
+    setIsUpdating(true);
+    try {
+      const newValue = !pos.show_live_results;
+      const res = await apiFetch<any>(`/election/positions/${pos.uid}/update/`, {
+        method: "PATCH",
+        body: JSON.stringify({ show_live_results: newValue })
+      });
+      if (res.status === "success") {
+        const newPos = [...positions];
+        newPos[posIdx].show_live_results = newValue;
+        setPositions(newPos);
+      }
+    } catch (err) {
+      console.error("Failed to update position visibility:", err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <div className="max-w-[1240px] mx-auto space-y-6 md:space-y-8 mb-20 px-4 pt-4">
@@ -222,6 +298,28 @@ function PreviewContent() {
                     {turnoutText}
                 </span>
              </Link>
+              
+              <div className="flex flex-col sm:flex-row items-center gap-6 bg-white border border-gray-100 p-4 px-6 rounded-[28px] shadow-sm">
+                <Switch 
+                  label="Live Results"
+                  subLabel={globalShowLive ? "Public" : "Hidden"}
+                  enabled={globalShowLive}
+                  onChange={() => handleToggleGlobal("show_live_results")}
+                  disabled={isUpdating}
+                  activeColor="bg-blue-600"
+                />
+
+                <div className="hidden sm:block w-px h-6 bg-gray-100" />
+
+                <Switch 
+                  label="Final Winner"
+                  subLabel={globalShowFinal ? "Visible" : "Hidden"}
+                  enabled={globalShowFinal}
+                  onChange={() => handleToggleGlobal("show_final_results")}
+                  disabled={isUpdating}
+                  activeColor="bg-indigo-900"
+                />
+              </div>
           </div>
         </div>
 
@@ -278,7 +376,17 @@ function PreviewContent() {
               <div className="xl:w-[45%] flex flex-col gap-6 md:gap-8 relative z-10 w-full text-center xl:text-left">
                 <div className="space-y-1">
                    <h2 className="text-xl md:text-3xl font-black text-[#101828] tracking-tight">{position.title}</h2>
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Position Results</p>
+                   <div className="flex flex-wrap items-center justify-center xl:justify-start gap-4">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Position Results</p>
+                      <Switch 
+                        label="Voter View"
+                        subLabel={position.show_live_results ? "Visible" : "Hidden"}
+                        enabled={position.show_live_results}
+                        onChange={() => handleTogglePosition(pIdx)}
+                        disabled={isUpdating}
+                        activeColor="bg-blue-600"
+                      />
+                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center py-4">
                   <PieChart candidates={position.candidates} />

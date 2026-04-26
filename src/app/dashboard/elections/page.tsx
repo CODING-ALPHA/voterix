@@ -112,8 +112,13 @@ export default function ElectionsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className={`${isEmpty ? "bg-white border border-gray-200 shadow-sm rounded-xl" : "bg-transparent md:bg-white md:border md:border-gray-200 md:shadow-sm md:rounded-xl"} min-h-[400px] md:min-h-[500px] overflow-hidden p-0 transition-all duration-300`}>
-        {isEmpty ? (
+      <div className={`${(isEmpty || isLoading) ? "bg-white border border-gray-200 shadow-sm rounded-xl" : "bg-transparent md:bg-white md:border md:border-gray-200 md:shadow-sm md:rounded-xl"} min-h-[400px] md:min-h-[500px] overflow-hidden p-0 transition-all duration-300 flex flex-col`}>
+        {isLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium text-sm animate-pulse">Loading elections...</p>
+          </div>
+        ) : isEmpty ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-8 md:mt-12">
             {/* Central Illustration */}
             <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-50 rounded-full flex items-center justify-center mb-6 md:mb-8 overflow-hidden">

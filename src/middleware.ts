@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth_token')?.value;
+  const tokenValue = request.cookies.get('auth_token')?.value;
+  const token = (tokenValue === 'undefined' || tokenValue === 'null') ? null : tokenValue;
   const { pathname } = request.nextUrl;
 
   // Define protected routes
