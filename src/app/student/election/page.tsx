@@ -52,6 +52,18 @@ function ElectionContent() {
     fetchBallot();
   }, [electionId, matricNumber]);
 
+  // Scrub URL parameters for security/privacy
+  useEffect(() => {
+    if (typeof window !== "undefined" && (queryToken || matricNumber)) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("token");
+      url.searchParams.delete("session_token");
+      url.searchParams.delete("matric_number");
+      url.searchParams.delete("matric_no");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [queryToken, matricNumber]);
+
   const handleSelect = (position: any, candidate: any) => {
     const positionKey = String(position.uid || position.id || position.title);
     const candidateValue = candidate.uid || candidate.id || candidate.name;

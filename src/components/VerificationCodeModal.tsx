@@ -121,6 +121,7 @@ export default function VerificationCodeModal({
                   key={index}
                   ref={(el) => { inputs.current[index] = el; }}
                   type="text"
+                  inputMode="numeric"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}

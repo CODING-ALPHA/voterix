@@ -13,6 +13,11 @@ function PreviewContent() {
   const [turnout, setTurnout] = useState<any>(null);
   const [electionTitle, setElectionTitle] = useState("Loading Results...");
   const [isLoading, setIsLoading] = useState(true);
+  const [electionInfo, setElectionInfo] = useState<{
+    show_live_results: boolean;
+    show_final_results: boolean;
+    status: string;
+  } | null>(null);
 
   const fetchResults = async () => {
     if (!electionPublikId) return;
@@ -20,9 +25,14 @@ function PreviewContent() {
     try {
       const result = await apiFetch<any>(`/election/live-preview/${electionPublikId}/`);
       if (result.status === "success") {
-        setPositions(result.data.positions);
+        setPositions(result.data.positions || []);
         setTurnout(result.data.turnout);
         setElectionTitle(result.data.election_title || result.data.title);
+        setElectionInfo({
+          show_live_results: result.data.show_live_results,
+          show_final_results: result.data.show_final_results,
+          status: result.data.status,
+        });
       }
     } catch (error) {
       console.error("Fetch results error:", error);
@@ -48,6 +58,11 @@ function PreviewContent() {
     );
   }
 
+  const isHidden = electionInfo && (
+    (electionInfo.status === "ongoing" && !electionInfo.show_live_results) ||
+    (electionInfo.status === "completed" && !electionInfo.show_final_results)
+  );
+
   return (
     <div className="p-6 md:p-10 lg:p-12 max-w-[1400px] mx-auto min-h-screen">
       {/* Page Header */}
@@ -60,7 +75,7 @@ function PreviewContent() {
             Live real-time monitoring of the ongoing election.
           </p>
         </div>
-        {turnout && (
+        {!isHidden && turnout && (
           <div className="bg-[#3457B4]/5 px-4 py-2 rounded-xl border border-[#3457B4]/10">
             <span className="text-xs font-bold text-[#3457B4] uppercase tracking-wider block mb-1">Total Turnout</span>
             <div className="flex items-center gap-2">
@@ -84,6 +99,19 @@ function PreviewContent() {
                 <div className="w-10 h-10 border-4 border-[#3457B4]/10 border-t-[#3457B4] rounded-full animate-spin" />
                 <span className="text-zinc-400 font-bold text-xs uppercase tracking-widest">Fetching live data...</span>
              </div>
+          ) : isHidden ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-10 h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Results are currently hidden</h3>
+              <p className="text-gray-500 max-w-sm text-sm">
+                The election administrator has disabled live result viewing for this period. 
+                Please check back later once the official results are released.
+              </p>
+            </div>
           ) : positions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <span className="text-gray-400 font-medium">No results data available yet.</span>

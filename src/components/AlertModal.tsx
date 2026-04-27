@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { X, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { X, AlertCircle, CheckCircle2, Info, Eye, EyeOff } from "lucide-react";
 
 type AlertType = "error" | "success" | "info" | "warning";
 
@@ -124,9 +124,13 @@ interface PinModalProps {
 
 export function PinModal({ isOpen, onClose, onConfirm, isLoading }: PinModalProps) {
   const [pin, setPin] = React.useState("");
+  const [showPin, setShowPin] = React.useState(false);
 
   useEffect(() => {
-    if (!isOpen) setPin("");
+    if (!isOpen) {
+      setPin("");
+      setShowPin(false);
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -164,15 +168,25 @@ export function PinModal({ isOpen, onClose, onConfirm, isLoading }: PinModalProp
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 text-left">
               6-Digit PIN
             </label>
-            <input
-              type="password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="••••••"
-              maxLength={6}
-              autoFocus
-              className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 text-center text-xl font-bold tracking-widest placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showPin ? "text" : "password"}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="••••••"
+                maxLength={6}
+                autoFocus
+                className="w-full h-12 px-4 pr-11 rounded-xl border border-gray-300 bg-white text-gray-900 text-center text-xl font-bold tracking-widest placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                title={showPin ? "Hide PIN" : "Show PIN"}
+              >
+                {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex w-full gap-3">

@@ -7,9 +7,11 @@
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || ""}`.replace(/\/+$/, "");
 
 type ApiErrorPayload = {
+  success?: boolean;
   message?: unknown;
   errors?: Record<string, string[]>;
   detail?: unknown;
+  error_code?: string;
 };
 
 function toApiErrorPayload(value: unknown): ApiErrorPayload {
@@ -165,7 +167,9 @@ export function saveTokens(tokens: { access: string; refresh: string }) {
   localStorage.setItem("access_token", tokens.access);
   localStorage.setItem("refresh_token", tokens.refresh);
   // Keep cookie in sync for middleware
-  document.cookie = `auth_token=${tokens.access}; path=/; max-age=86400; SameSite=Strict`;
+  // Ensure Secure flag is added for production environments
+  const secureFlag = typeof window !== "undefined" && window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `auth_token=${tokens.access}; path=/; max-age=86400; SameSite=Strict${secureFlag}`;
 }
 
 export function clearTokens() {
@@ -180,12 +184,22 @@ export function clearTokens() {
 export class ApiError extends Error {
   status: number;
   errors?: Record<string, string[]>;
+  errorCode?: string;
+  requestId?: string;
 
-  constructor(status: number, message: string, errors?: Record<string, string[]>) {
+  constructor(
+    status: number,
+    message: string,
+    errors?: Record<string, string[]>,
+    errorCode?: string,
+    requestId?: string
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.errors = errors;
+    this.errorCode = errorCode;
+    this.requestId = requestId;
   }
 }
 
@@ -203,20 +217,58 @@ export async function apiFetch<T = unknown>(
     ...(options.headers as Record<string, string>),
   };
 
-  const token = getAccessToken();
+  let token = getAccessToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const fullPath = `${BASE_URL}/${path.replace(/^\/+/, "")}`;
-  const res = await fetch(fullPath, { ...options, headers });
+  
+  let res: Response;
+  try {
+    res = await fetch(fullPath, { ...options, headers });
+  } catch (err) {
+    // Handle Network Level Errors (Offline, CORS, DNS)
+    throw new ApiError(0, "Unable to connect to the server. Please check your internet connection.", undefined, "NETWORK_ERROR");
+  }
 
-  let data: unknown = null;
+  const requestId = res.headers.get("X-Request-ID") || undefined;
+
+  // Handle Token Refresh (401 Unauthorized)
+  if (res.status === 401 && getRefreshToken() && !path.includes("auth/token/refresh")) {
+    try {
+      const refreshRes = await fetch(`${BASE_URL}/auth/token/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: getRefreshToken() }),
+      });
+
+      if (refreshRes.ok) {
+        const tokens = await refreshRes.json();
+        saveTokens({ access: tokens.access, refresh: getRefreshToken() || "" });
+
+        // Retry the original request with the new token
+        token = tokens.access;
+        headers["Authorization"] = `Bearer ${token}`;
+        res = await fetch(fullPath, { ...options, headers });
+      } else {
+        // Refresh failed, clear tokens and redirect to login
+        clearTokens();
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?session_expired=1";
+        }
+      }
+    } catch (err) {
+      console.error("Token refresh failed:", err);
+    }
+  }
+
+  let data: any = null;
   try {
     data = await res.json();
   } catch {
     // empty body
   }
 
-  if (!res.ok) {
+  if (!res.ok || (data && data.success === false)) {
     const errorPayload = toApiErrorPayload(data);
 
     throw new ApiError(
@@ -227,9 +279,11 @@ export async function apiFetch<T = unknown>(
           errors: errorPayload.errors,
           detail: errorPayload.detail,
         },
-        `HTTP ${res.status}`
+        `Error ${res.status || "Unknown"}`
       ),
-      errorPayload.errors
+      errorPayload.errors,
+      errorPayload.error_code,
+      requestId
     );
   }
 
@@ -251,16 +305,24 @@ export async function voterFetch<T = unknown>(
   };
 
   const fullPath = `${BASE_URL}/${path.replace(/^\/+/, "")}`;
-  const res = await fetch(fullPath, { ...options, headers });
+  
+  let res: Response;
+  try {
+    res = await fetch(fullPath, { ...options, headers });
+  } catch (err) {
+    throw new ApiError(0, "Unable to connect to the server.", undefined, "NETWORK_ERROR");
+  }
 
-  let data: unknown = null;
+  const requestId = res.headers.get("X-Request-ID") || undefined;
+
+  let data: any = null;
   try {
     data = await res.json();
   } catch {
     // empty body
   }
 
-  if (!res.ok) {
+  if (!res.ok || (data && data.success === false)) {
     const errorPayload = toApiErrorPayload(data);
 
     throw new ApiError(
@@ -271,9 +333,11 @@ export async function voterFetch<T = unknown>(
           errors: errorPayload.errors,
           detail: errorPayload.detail,
         },
-        `HTTP ${res.status}`
+        `Error ${res.status || "Unknown"}`
       ),
-      errorPayload.errors
+      errorPayload.errors,
+      errorPayload.error_code,
+      requestId
     );
   }
 
@@ -293,20 +357,28 @@ export async function apiUpload<T = unknown>(
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const fullPath = `${BASE_URL}/${path.replace(/^\/+/, "")}`;
-  const res = await fetch(fullPath, {
-    method,
-    headers,
-    body: formData,
-  });
+  
+  let res: Response;
+  try {
+    res = await fetch(fullPath, {
+      method,
+      headers,
+      body: formData,
+    });
+  } catch (err) {
+    throw new ApiError(0, "Network error during upload.", undefined, "NETWORK_ERROR");
+  }
 
-  let data: unknown = null;
+  const requestId = res.headers.get("X-Request-ID") || undefined;
+
+  let data: any = null;
   try {
     data = await res.json();
   } catch {
     // empty body
   }
 
-  if (!res.ok) {
+  if (!res.ok || (data && data.success === false)) {
     const errorPayload = toApiErrorPayload(data);
 
     throw new ApiError(
@@ -317,9 +389,11 @@ export async function apiUpload<T = unknown>(
           errors: errorPayload.errors,
           detail: errorPayload.detail,
         },
-        `HTTP ${res.status}`
+        `Upload Error ${res.status || "Unknown"}`
       ),
-      errorPayload.errors
+      errorPayload.errors,
+      errorPayload.error_code,
+      requestId
     );
   }
 
