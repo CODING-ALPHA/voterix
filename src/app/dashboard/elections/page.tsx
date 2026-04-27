@@ -12,6 +12,7 @@ export default function ElectionsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedElection, setSelectedElection] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { accessToken, user } = useAuth();
@@ -54,7 +55,13 @@ export default function ElectionsPage() {
     }
   }, [accessToken]);
 
+  const filteredElections = elections.filter(el => 
+    el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    el.status.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const isEmpty = elections.length === 0;
+  const isFilterEmpty = !isEmpty && filteredElections.length === 0;
 
   const handleEdit = (election: any) => {
     setSelectedElection(election);
@@ -63,10 +70,10 @@ export default function ElectionsPage() {
 
   const handleCopyLink = (election: any) => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const assocId = user?.publik_id || "NOT_LOGGED_IN";
+    const assocId = user?.publik_id || "";
     
-    // Format: /student/login?assoc=ASSOC_ID&election=ELECT_ID
-    const link = `${baseUrl}/student/login?assoc=${assocId}&election=${election.publik_id}`;
+    // Format: /student/verify?assoc=ASSOC_ID&election=ELECT_ID
+    const link = `${baseUrl}/student/verify?assoc=${assocId}&election=${election.publik_id}`;
     
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(link);
@@ -89,6 +96,8 @@ export default function ElectionsPage() {
               <input
                 type="text"
                 placeholder="Search Elections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-10 pl-9 pr-4 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 transition-colors text-sm font-medium text-gray-900 placeholder:text-gray-500"
               />
             </div>
@@ -146,11 +155,21 @@ export default function ElectionsPage() {
               Create Election
             </Link>
           </div>
+        ) : isFilterEmpty ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+             <p className="text-gray-500 font-medium">No elections match "{searchQuery}"</p>
+             <button 
+               onClick={() => setSearchQuery("")}
+               className="mt-2 text-blue-600 text-sm font-semibold hover:underline"
+             >
+               Clear search
+             </button>
+          </div>
         ) : (
           <>
             {/* Mobile Card Layout */}
-            <div className="md:hidden space-y-4">
-              {elections.map((election) => (
+            <div className="md:hidden space-y-4 p-4">
+              {filteredElections.map((election) => (
                 <div key={election.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -169,7 +188,7 @@ export default function ElectionsPage() {
 
                   <div className="flex items-center gap-2 bg-gray-50/50 p-2.5 rounded-lg border border-gray-100">
                     <p className="text-[10px] font-medium text-gray-500 truncate flex-1 leading-none">
-                      {window.location.origin}/student/login?assoc={user?.publik_id}&election={election.publik_id}
+                      {window.location.origin}/student/verify?assoc={user?.publik_id}&election={election.publik_id}
                     </p>
                     <button 
                       onClick={() => handleCopyLink(election)}
@@ -223,7 +242,7 @@ export default function ElectionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {elections.map((election) => (
+                  {filteredElections.map((election) => (
                     <tr key={election.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-3.5 w-full">
                         <div className="flex items-center gap-3">

@@ -41,6 +41,7 @@ export interface ElectionUpdatePayload {
   show_live_results?: boolean;
   show_final_results?: boolean;
   csv_file?: File;
+  voter_batch_uids?: string[];
 }
 
 export interface ElectionResults {
@@ -131,6 +132,9 @@ export function updateElection(publikId: string, payload: ElectionUpdatePayload)
   if (payload.show_final_results !== undefined)
     formData.append("show_final_results", String(payload.show_final_results));
   if (payload.csv_file) formData.append("csv_file", payload.csv_file);
+  if (payload.voter_batch_uids && payload.voter_batch_uids.length > 0) {
+    payload.voter_batch_uids.forEach(uid => formData.append("voter_batch_uids", uid));
+  }
 
   return apiUpload(`/election/${publikId}/update/`, formData, "PATCH");
 }
@@ -211,10 +215,11 @@ export function getVoterLoginData(
 export function castVote(
   voterUid: string,
   voterToken: string,
-  selections: Record<string, number | string>
+  selections: Record<string, number | string>,
+  pin: string
 ) {
   return voterFetch(`/election/cast-vote/${voterUid}/`, voterToken, {
     method: "POST",
-    body: JSON.stringify({ selections }),
+    body: JSON.stringify({ selections, pin }),
   });
 }
