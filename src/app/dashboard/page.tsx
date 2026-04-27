@@ -22,14 +22,17 @@ export default function AdminDashboard() {
     { title: "Voters", value: "0", percentage: "0%" },
   ]);
   const [loading, setLoading] = useState(true);
+  const [elections, setElections] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       if (!accessToken) return;
+      setLoading(true);
       try {
-        const result = await apiFetch<any>("/dashboard/admin/");
-        if (result.status === "success") {
-          const metrics = result.data?.metrics ?? result.data ?? {};
+        // Fetch stats
+        const statsRes = await apiFetch<any>("/dashboard/admin/");
+        if (statsRes.status === "success") {
+          const metrics = statsRes.data?.metrics ?? statsRes.data ?? {};
           const total = Number(metrics.total_elections ?? metrics.elections_created ?? 0);
           const completed = Number(metrics.completed_elections ?? metrics.elections_completed ?? 0);
           const totalStudents = Number(metrics.total_students ?? metrics.students_total ?? 0);
@@ -51,14 +54,21 @@ export default function AdminDashboard() {
             },
           ]);
         }
+
+        // Fetch elections
+        const electRes = await apiFetch<any>("/election/");
+        if (electRes.status === "success") {
+          setElections(electRes.data || []);
+        }
       } catch (error) {
-        console.error("Stats fetch error:", error);
+        console.error("Dashboard fetch error:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
+    fetchDashboardData();
   }, [accessToken]);
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -107,40 +117,100 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* Main Empty State Content */}
-      <div className="bg-white rounded-xl shadow-sm min-h-[400px] md:min-h-[480px] flex flex-col pt-5 pb-10 overflow-hidden border border-gray-200">
-        <div className="px-6 mb-6 border-b border-transparent">
-          <h2 className="text-gray-900 font-semibold text-base">Election</h2>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-4">
-          {/* Central Avatar Icon */}
-          <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-            <Image 
-              src="/users-03.svg"
-              alt="No Elections"
-              width={48}
-              height={48}
-              className="opacity-40"
-            />
-          </div>
-
-          <h3 className="text-gray-900 text-lg font-semibold mb-2 tracking-tight">
-            No Election created at this time
-          </h3>
-          <p className="text-gray-500 font-medium max-w-[240px] leading-relaxed mb-6 text-sm">
-            Create election for your institution to see election here
-          </p>
-
+      {/* Main Content Area */}
+      <div className="bg-white rounded-xl shadow-sm min-h-[400px] flex flex-col border border-gray-200 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+          <h2 className="text-gray-900 font-semibold text-base">Elections</h2>
           <Link 
-            href="/dashboard/elections/add"
-            className="flex items-center gap-2 bg-[#1C1F26] text-white h-10 px-6 rounded-lg font-medium hover:bg-black transition-all shadow-md"
+            href="/dashboard/elections"
+            className="text-[#3457B4] text-xs font-bold hover:underline"
           >
-            <Plus size={16} strokeWidth={2} />
-            Create Election
+            View All
           </Link>
         </div>
+
+        {loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-12">
+            <div className="w-8 h-8 border-4 border-blue-50 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 text-sm font-medium animate-pulse">Syncing elections...</p>
+          </div>
+        ) : elections.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+              <Image 
+                src="/users-03.svg"
+                alt="No Elections"
+                width={40}
+                height={40}
+                className="opacity-40"
+              />
+            </div>
+            <h3 className="text-gray-900 text-base font-semibold mb-1">
+              No Election created at this time
+            </h3>
+            <p className="text-gray-500 font-medium max-w-[240px] leading-relaxed mb-6 text-xs">
+              Create election for your institution to see election here
+            </p>
+            <Link 
+              href="/dashboard/elections/add"
+              className="flex items-center gap-2 bg-[#1C1F26] text-white h-10 px-6 rounded-lg font-medium hover:bg-black transition-all shadow-md"
+            >
+              <Plus size={16} strokeWidth={2} />
+              Create Election
+            </Link>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-50 text-gray-400">
+                  <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest">Election Title</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest">Status</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest">Duration</th>
+                  <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {elections.slice(0, 5).map((election) => (
+                  <tr key={election.uid} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#3457B4] flex items-center justify-center font-bold text-[10px]">
+                          {election.title.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-gray-900 text-sm truncate max-w-[180px]">{election.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        election.status === 'ongoing' ? 'bg-green-50 text-green-600' : 
+                        election.status === 'completed' ? 'bg-blue-50 text-blue-600' : 
+                        'bg-amber-50 text-amber-600'
+                      }`}>
+                        {election.status.charAt(0).toUpperCase() + election.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-medium text-gray-500 whitespace-nowrap">
+                        {new Date(election.start_time).toLocaleDateString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Link 
+                        href={`/dashboard/preview?id=${election.publik_id}`}
+                        className="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-gray-50 text-gray-600 text-[10px] font-bold hover:bg-[#3457B4] hover:text-white transition-all"
+                      >
+                        Preview
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
 
     </div>
   );
