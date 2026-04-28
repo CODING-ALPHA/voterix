@@ -4,8 +4,8 @@ export function middleware(request: NextRequest) {
   const token = (tokenValue === 'undefined' || tokenValue === 'null') ? null : tokenValue;
   const { pathname } = request.nextUrl;
 
-  // Define protected routes
-  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/student');
+  // Define protected routes (Admin only)
+  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/super-admin');
   // Define auth routes (login/register)
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register');
 
@@ -26,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/student/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/super-admin/:path*', '/login', '/register'],
 };

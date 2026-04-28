@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import AlertModal from "@/components/AlertModal";
 import { PinModal } from "@/components/AlertModal";
-import { apiFetch, formatApiErrorMessage, voterFetch } from "@/lib/api-client";
+import { apiFetch, formatApiErrorMessage, voterFetch, getCookie, saveVoterSession, getVoterToken } from "@/lib/api-client";
 
 function ElectionContent() {
   const searchParams = useSearchParams();
@@ -28,7 +28,7 @@ function ElectionContent() {
   useEffect(() => {
     const fetchBallot = async () => {
       try {
-        const matric = matricNumber || (typeof window !== "undefined" ? localStorage.getItem("voter_matric") || "" : "");
+        const matric = matricNumber || (typeof window !== "undefined" ? getCookie("voter_matric") || "" : "");
         
         // 1. Check Status
         const statusRes = await apiFetch<any>(`/election/public/${electionId}/?matric=${encodeURIComponent(matric)}`);
@@ -74,9 +74,9 @@ function ElectionContent() {
     setIsSubmitting(true);
     try {
       let voterToken =
-        queryToken || (typeof window !== "undefined" ? localStorage.getItem("voter_session_token") || "" : "");
+        queryToken || (typeof window !== "undefined" ? getVoterToken() || "" : "");
       let resolvedVoterUid =
-        voterUid || (typeof window !== "undefined" ? localStorage.getItem("voter_uid") || "" : "");
+        voterUid || (typeof window !== "undefined" ? getCookie("voter_uid") || "" : "");
 
       if (!voterToken) {
         if (!matricNumber) {
@@ -109,8 +109,12 @@ function ElectionContent() {
         resolvedVoterUid = resolvedVoterUid || loginResult.data.voter_uid || "";
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("voter_session_token", voterToken);
-          if (resolvedVoterUid) localStorage.setItem("voter_uid", resolvedVoterUid);
+          saveVoterSession({
+            token: voterToken,
+            uid: resolvedVoterUid,
+            name: loginResult.data.voter_name || "",
+            matric: matricNumber
+          });
         }
       }
 
