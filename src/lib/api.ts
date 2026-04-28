@@ -1,7 +1,7 @@
 /**
  * Voterix API Client
  * Base URL is read from NEXT_PUBLIC_API_URL env variable.
- * Automatically attaches JWT Bearer token from localStorage.
+ * Automatically attaches JWT Bearer token from Cookies.
  */
 
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || ""}`.replace(/\/+$/, "");
@@ -143,20 +143,32 @@ export function getMediaUrl(url: string | null | undefined): string | null {
   return `${rootUrl}${sanitizedUrl}`;
 }
 
+// ─── Cookie Helpers ───────────────────────────────────────────────────────────
+
+export function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+function setCookie(name: string, value: string, maxAge: number = 86400) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+function deleteCookie(name: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+}
+
 // ─── Token Helpers ────────────────────────────────────────────────────────────
 
 export function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("access_token");
-  if (!token || token === "undefined" || token === "null") return null;
-  return token;
+  return getCookie("auth_token");
 }
 
 export function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("refresh_token");
-  if (!token || token === "undefined" || token === "null") return null;
-  return token;
+  return getCookie("refresh_token");
 }
 
 export function saveTokens(tokens: { access: string; refresh: string }) {
@@ -164,19 +176,33 @@ export function saveTokens(tokens: { access: string; refresh: string }) {
     console.warn("Attempted to save invalid tokens:", tokens);
     return;
   }
-  localStorage.setItem("access_token", tokens.access);
-  localStorage.setItem("refresh_token", tokens.refresh);
-  // Keep cookie in sync for middleware
-  // Ensure Secure flag is added for production environments
-  const secureFlag = typeof window !== "undefined" && window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `auth_token=${tokens.access}; path=/; max-age=86400; SameSite=Strict${secureFlag}`;
+  setCookie("auth_token", tokens.access, 86400); // 1 day
+  setCookie("refresh_token", tokens.refresh, 604800); // 7 days
 }
 
 export function clearTokens() {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  // Clear the auth_token cookie by setting its expiration to the past
-  document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict";
+  deleteCookie("auth_token");
+  deleteCookie("refresh_token");
+}
+
+// ─── Voter Session Helpers ─────────────────────────────────────────────────────
+
+export function getVoterToken(): string | null {
+  return getCookie("voter_session_token");
+}
+
+export function saveVoterSession(data: { token: string; uid: string; name: string; matric: string }) {
+  setCookie("voter_session_token", data.token, 86400);
+  setCookie("voter_uid", data.uid, 86400);
+  setCookie("voter_name", data.name, 86400);
+  setCookie("voter_matric", data.matric, 86400);
+}
+
+export function clearVoterSession() {
+  deleteCookie("voter_session_token");
+  deleteCookie("voter_uid");
+  deleteCookie("voter_name");
+  deleteCookie("voter_matric");
 }
 
 // ─── API Error ────────────────────────────────────────────────────────────────

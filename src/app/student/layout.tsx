@@ -13,6 +13,7 @@ import {
   Menu,
   X as CloseIcon
 } from "lucide-react";
+import { clearVoterSession } from "@/lib/api-client";
 
 function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,10 +38,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
   }, [queryElectionId, queryAssocId]);
 
   const handleVoterLogout = () => {
-    localStorage.removeItem("voter_session_token");
-    localStorage.removeItem("voter_uid");
-    localStorage.removeItem("voter_name");
-    localStorage.removeItem("voter_matric");
+    clearVoterSession();
     localStorage.removeItem("voter_active_election");
     localStorage.removeItem("voter_active_assoc");
     

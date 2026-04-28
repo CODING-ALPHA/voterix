@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AlertModal from "@/components/AlertModal";
-import { formatApiErrorMessage, voterVerifyOtp } from "@/lib/api-client";
+import { formatApiErrorMessage, voterVerifyOtp, saveVoterSession } from "@/lib/api-client";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
 function VerifyContent() {
@@ -61,10 +61,12 @@ function VerifyContent() {
         // Save session data returned from backend
         const { token, voter_uid, voter_name, election_id } = result.data as any;
         
-        if (token) localStorage.setItem("voter_session_token", token);
-        if (voter_uid) localStorage.setItem("voter_uid", voter_uid);
-        if (voter_name) localStorage.setItem("voter_name", voter_name);
-        localStorage.setItem("voter_matric", matric);
+        saveVoterSession({
+          token: token,
+          uid: voter_uid,
+          name: voter_name,
+          matric: matric
+        });
         
         const finalEid = election_id || queryElectionId;
         setTargetElectionId(finalEid);

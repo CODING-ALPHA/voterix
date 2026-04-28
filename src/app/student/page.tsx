@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getPublicElectionDetail, apiFetch } from "@/lib/api-client";
+import { getPublicElectionDetail, apiFetch, getCookie } from "@/lib/api-client";
 
 const CircleProgress = ({ value, max, size = 120, strokeWidth = 8, color = "#4f6ef7", children }: any) => {
   const radius = (size - strokeWidth) / 2;
@@ -58,13 +58,13 @@ function DashboardContent() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       setVoter({
-        name: localStorage.getItem("voter_name") || "Voter",
-        matric: localStorage.getItem("voter_matric") || "",
+        name: getCookie("voter_name") || "Voter",
+        matric: getCookie("voter_matric") || "",
       });
     }
 
     if (electionId) {
-      const matric = typeof window !== "undefined" ? localStorage.getItem("voter_matric") || "" : "";
+      const matric = typeof window !== "undefined" ? getCookie("voter_matric") || "" : "";
       getPublicElectionDetail(electionId, matric).then(res => {
         if (res.status === "success") setMeta(res.data);
       });

@@ -39,8 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ── Fetch profile from API ──────────────────────────────────────────────────
   const fetchProfile = async (token: string): Promise<AssociationProfile> => {
     try {
-      // Temporarily set the token in localStorage so apiFetch can pick it up
-      localStorage.setItem("access_token", token);
       const res = await getProfile();
       setUser(res.data);
       setAccessToken(token);
