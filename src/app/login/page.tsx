@@ -124,6 +124,18 @@ export default function Login() {
               Register
             </Link>
           </p>
+
+          <div className="mt-10 pt-8 border-t border-zinc-100">
+            <p className="text-center text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">
+              Are you a Voter?
+            </p>
+            <Link 
+              href="/student/login" 
+              className="flex items-center justify-center w-full h-12 rounded-xl border-2 border-[#3457B4] text-[#3457B4] font-black text-xs uppercase tracking-widest hover:bg-[#3457B4]/5 transition-all"
+            >
+              Go to Voter Portal
+            </Link>
+          </div>
         </div>
       </div>
 

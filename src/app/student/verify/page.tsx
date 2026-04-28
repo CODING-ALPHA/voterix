@@ -9,7 +9,8 @@ import {
   formatApiErrorMessage,
   voterRequestOtp,
   getPublicElectionDetail,
-  apiFetch
+  apiFetch,
+  saveVoterSession
 } from "@/lib/api-client";
 
 function VerificationContent() {
@@ -68,8 +69,9 @@ function VerificationContent() {
       });
 
       if (result.status === "success") {
-        localStorage.setItem("voter_name", name);
-        localStorage.setItem("voter_matric", matricNo);
+        // Store name and matric in short-lived cookies for the next step
+        document.cookie = `voter_name=${encodeURIComponent(name)}; path=/; max-age=3600; SameSite=Lax`;
+        document.cookie = `voter_matric=${encodeURIComponent(matricNo)}; path=/; max-age=3600; SameSite=Lax`;
         router.push(`/student/verify/otp?email=${email}&matric=${matricNo}&assoc=${assocId}&election=${electionId}`);
       } else {
         setMatricError(true);
@@ -107,10 +109,12 @@ function VerificationContent() {
 
       if (result.status === "success") {
         const { token, voter_uid, voter_name } = result.data;
-        localStorage.setItem("voter_session_token", token);
-        localStorage.setItem("voter_uid", voter_uid);
-        localStorage.setItem("voter_name", voter_name);
-        localStorage.setItem("voter_matric", matricNo);
+        saveVoterSession({
+          token,
+          uid: voter_uid,
+          name: voter_name,
+          matric: matricNo
+        });
 
         router.push(`/student?election=${electionId}&assoc=${assocId || ''}`);
       } else {
