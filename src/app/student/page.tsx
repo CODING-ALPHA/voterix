@@ -68,9 +68,17 @@ function DashboardContent() {
       getPublicElectionDetail(electionId, matric).then(res => {
         if (res.status === "success") setMeta(res.data);
       });
-      apiFetch<any>(`/election/live-preview/${electionId}/`).then(res => {
-        if (res.status === "success") setBallot(res.data);
-      });
+      const voterToken = typeof window !== "undefined" ? getVoterToken() || "" : "";
+      if (voterToken) {
+        voterFetch<any>(`/election/ballot/`, voterToken).then(res => {
+          if (res.status === "success") setBallot(res.data);
+        });
+      } else {
+        // Fallback for non-authenticated preview if needed
+        apiFetch<any>(`/election/live-preview/${electionId}/`).then(res => {
+          if (res.status === "success") setBallot(res.data);
+        });
+      }
     }
   }, [electionId]);
 
