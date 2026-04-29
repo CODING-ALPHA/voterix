@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getPublicElectionDetail, apiFetch, getCookie, getVoterToken, getVoterToken, voterFetch } from "@/lib/api-client";
+import { getPublicElectionDetail, apiFetch, getCookie, getVoterToken, voterFetch } from "@/lib/api-client";
 
 const CircleProgress = ({ value, max, size = 120, strokeWidth = 8, color = "#4f6ef7", children }: any) => {
   const radius = (size - strokeWidth) / 2;
