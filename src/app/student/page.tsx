@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getPublicElectionDetail, apiFetch, getCookie, getVoterToken, voterFetch } from "@/lib/api-client";
+import { getPublicElectionDetail, apiFetch, getCookie, getVoterToken, getVoterToken, voterFetch } from "@/lib/api-client";
 
 const CircleProgress = ({ value, max, size = 120, strokeWidth = 8, color = "#4f6ef7", children }: any) => {
   const radius = (size - strokeWidth) / 2;
@@ -89,19 +89,19 @@ function DashboardContent() {
     const isCompleted = meta?.status === "completed";
 
     // Target is end_time if ongoing, start_time if pending
-  // Target is end_time if ongoing, start_time if pending
+    // Target is end_time if ongoing, start_time if pending
     const target = (isOngoing || meta?.status === "ongoing") ? endTime : startTime;
-    
+
     if (!target) return;
     if (isCompleted || meta?.status === "completed") {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
     }
 
     const tick = () => {
       const now = Date.now();
       const diff = Math.max(0, target - now);
-      
+
       setTimeLeft({
         days: Math.floor(diff / 86400000),
         hours: Math.floor((diff % 86400000) / 3600000),
@@ -109,7 +109,7 @@ function DashboardContent() {
         seconds: Math.floor((diff % 60000) / 1000),
       });
     };
-    
+
     const id = setInterval(tick, 1000);
     tick();
     return () => clearInterval(id);
@@ -127,7 +127,7 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col gap-8 p-6 md:p-10 lg:p-14 max-w-[1600px] mx-auto min-h-screen font-sans">
-      
+
       {/* Page Header */}
       <div className="mb-4">
         <h1 className="text-4xl font-medium text-gray-900 tracking-tight">
@@ -136,7 +136,7 @@ function DashboardContent() {
       </div>
 
       {/* Election Countdown Banner */}
-      <div 
+      <div
         className="w-full rounded-[1.5rem] p-8 md:p-10 shadow-2xl relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, #1a2e6e 0%, #1e3a8a 40%, #2a4db0 100%)" }}
       >
@@ -167,12 +167,12 @@ function DashboardContent() {
 
           <div className="flex flex-col items-center pt-6 lg:pt-0 border-t lg:border-t-0 border-white/10 w-full lg:w-auto">
             <span className="lg:hidden text-[9px] font-black text-[#adb5bd] uppercase tracking-widest mb-4">Total Turnout</span>
-            <CircleProgress 
-                value={ballot?.total_voted || ballot?.turnout?.total_voted || 0} 
-                max={ballot?.total_eligible || ballot?.turnout?.total_eligible || meta?.total_eligible_voters || 100} 
-                size={90} 
-                strokeWidth={5} 
-                color="#FE9431"
+            <CircleProgress
+              value={ballot?.total_voted || ballot?.turnout?.total_voted || 0}
+              max={ballot?.total_eligible || ballot?.turnout?.total_eligible || meta?.total_eligible_voters || 100}
+              size={90}
+              strokeWidth={5}
+              color="#FE9431"
             >
               <span className="text-white text-xl md:text-2xl font-black leading-none">
                 {ballot?.total_voted || ballot?.turnout?.total_voted || 0}
@@ -186,54 +186,54 @@ function DashboardContent() {
       </div>
 
       <div className="bg-white rounded-[1.5rem] shadow-sm p-10 md:p-14 border border-zinc-50 space-y-16">
-        
+
         <div>
-           <h3 className="text-2xl font-semibold text-[#101828] mb-4 tracking-tight">
-             Your Details
-           </h3>
-           <p className="text-gray-900 text-base font-medium mb-10 max-w-4xl leading-relaxed">
-             Verify that the below are your details. If the details are not yours, ensure you report to the electoral committee as soon as you can 
-           </p>
-           
-           <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="text-base font-semibold text-black min-w-[120px]">Name:</span>
-                <span className="text-base font-medium text-black capitalize">{voter.name}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-base font-semibold text-black min-w-[120px]">Matric No:</span>
-                <span className="text-base font-medium text-black uppercase">{voter.matric}</span>
-              </div>
-              {meta?.voter_status?.has_voted && (
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-100 rounded-full">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Election Completed (for you)</span>
-                  </div>
+          <h3 className="text-2xl font-semibold text-[#101828] mb-4 tracking-tight">
+            Your Details
+          </h3>
+          <p className="text-gray-900 text-base font-medium mb-10 max-w-4xl leading-relaxed">
+            Verify that the below are your details. If the details are not yours, ensure you report to the electoral committee as soon as you can
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-base font-semibold text-black min-w-[120px]">Name:</span>
+              <span className="text-base font-medium text-black capitalize">{voter.name}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-base font-semibold text-black min-w-[120px]">Matric No:</span>
+              <span className="text-base font-medium text-black uppercase">{voter.matric}</span>
+            </div>
+            {meta?.voter_status?.has_voted && (
+              <div className="flex items-center gap-3 mt-4">
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-100 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Election Completed (for you)</span>
                 </div>
-              )}
-           </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="pt-8 border-t border-zinc-100">
           <h3 className="text-2xl font-semibold text-[#101828] mb-4 tracking-tight">
-             Available Position
-           </h3>
-           <p className="text-gray-900 text-base font-medium mb-10">
-             Electoral Positions available for voting
-           </p>
-           
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-20">
-              {ballot?.positions?.map((pos: any, idx: number) => (
-                <div key={idx} className="text-base font-normal text-black">{pos.title}</div>
-              )) || (
+            Available Position
+          </h3>
+          <p className="text-gray-900 text-base font-medium mb-10">
+            Electoral Positions available for voting
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-20">
+            {ballot?.positions?.map((pos: any, idx: number) => (
+              <div key={idx} className="text-base font-normal text-black">{pos.title}</div>
+            )) || (
                 <div className="text-gray-400">Loading positions...</div>
               )}
-           </div>
+          </div>
         </div>
 
         <div className="pt-10 flex justify-center md:justify-start">
-          <Link 
+          <Link
             href={meta?.voter_status?.has_voted ? `/student/preview?election=${electionId}` : `/student/election?election=${electionId}`}
             className="text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14"
             style={{
