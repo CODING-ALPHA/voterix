@@ -44,8 +44,14 @@ function ElectionContent() {
           }
         }
 
-        // 2. Fetch Positions
-        const result = await apiFetch<any>(`/election/live-preview/${electionId}/`);
+        // 2. Fetch Ballot
+        const voterToken = queryToken || (typeof window !== "undefined" ? getVoterToken() || "" : "");
+        if (!voterToken) {
+           console.warn("No voter token found for ballot fetch");
+           return;
+        }
+
+        const result = await voterFetch<any>(`/election/ballot/`, voterToken);
         if (result.status === "success") {
           setPositions(result.data.positions);
         }
