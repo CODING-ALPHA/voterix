@@ -164,10 +164,10 @@ export function voterRequestOtp(
 /**
  * Step 2 — Voter confirms their identity with the OTP they received.
  */
-export function voterVerifyOtp(matric_no: string, otp: string) {
+export function voterVerifyOtp(matric_no: string, otp: string, election_id?: string) {
   return apiFetch<VoterOtpResponse>("/voters/verify-otp/", {
     method: "POST",
-    body: JSON.stringify({ matric_no, otp }),
+    body: JSON.stringify({ matric_no, otp, election_id }),
   });
 }
 

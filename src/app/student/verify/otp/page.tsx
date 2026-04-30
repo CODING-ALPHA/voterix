@@ -55,7 +55,7 @@ function VerifyContent() {
 
     setIsLoading(true);
     try {
-      const result = await voterVerifyOtp(matric, otpString);
+      const result = await voterVerifyOtp(matric, otpString, queryElectionId || undefined);
 
       if (result.status === "success") {
         // Save session data returned from backend

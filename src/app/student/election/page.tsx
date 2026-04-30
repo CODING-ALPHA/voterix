@@ -22,6 +22,7 @@ function ElectionContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [alert, setAlert] = useState<{ message: string; type: "error" | "success" | "warning" | "info" } | null>(null);
+  const [meta, setMeta] = useState<any>(null);
 
   const [hasVoted, setHasVoted] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -34,6 +35,7 @@ function ElectionContent() {
         // 1. Check Status
         const statusRes = await apiFetch<any>(`/election/public/${electionId}/?matric=${encodeURIComponent(matric)}`);
         if (statusRes.status === "success") {
+          setMeta(statusRes.data);
           if (statusRes.data.voter_status?.has_voted) {
             setHasVoted(true);
             return;
@@ -186,6 +188,35 @@ function ElectionContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3457B4]"></div>
+      </div>
+    );
+  }
+
+  if (meta?.status === "pending") {
+    return (
+      <div className="bg-[#F8FAFC] min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-10 text-blue-500 shadow-sm">
+           <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg>
+        </div>
+        <h1 className="text-3xl font-black text-[#101828] tracking-tight mb-4 uppercase">Election Not Started</h1>
+        <p className="text-gray-500 font-medium mb-12 max-w-md leading-relaxed">
+          The voting portal for {meta.title} is currently closed. It will open automatically once the election starts.
+        </p>
+        <button
+          onClick={() => router.push(`/student?election=${electionId}`)}
+          className="text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14 px-8"
+          style={{
+            borderRadius: '21px',
+            border: '1.81px solid #676767',
+            background: 'linear-gradient(180deg, #3457B4 0%, #4A496A 100%)',
+            boxShadow: '0 1.81px 3.619px 0 rgba(16, 24, 40, 0.05)',
+            gap: '14.476px'
+          }}
+        >
+          Return to Dashboard
+        </button>
       </div>
     );
   }
