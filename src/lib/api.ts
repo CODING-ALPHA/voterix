@@ -340,6 +340,8 @@ export async function voterFetch<T = unknown>(
     throw new ApiError(0, "Unable to connect to the server.", undefined, "NETWORK_ERROR");
   }
 
+  const requestId = res.headers.get("X-Request-ID") || undefined;
+
   // Handle Voter Session Expiry (401 Unauthorized)
   if (res.status === 401) {
     clearVoterSession();
