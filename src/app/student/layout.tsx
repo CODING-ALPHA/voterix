@@ -33,9 +33,22 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     if (queryAssocId) localStorage.setItem("voter_active_assoc", queryAssocId);
 
     // 2. Set active state from URL or LocalStorage
-    setActiveElectionId(queryElectionId || localStorage.getItem("voter_active_election"));
-    setActiveAssocId(queryAssocId || localStorage.getItem("voter_active_assoc"));
-  }, [queryElectionId, queryAssocId]);
+    const eid = queryElectionId || localStorage.getItem("voter_active_election");
+    const aid = queryAssocId || localStorage.getItem("voter_active_assoc");
+    setActiveElectionId(eid);
+    setActiveAssocId(aid);
+
+    // 3. Auth Guard: Check for session token
+    const isAuthPage = pathname === "/student/login" || pathname === "/student/verify" || pathname.startsWith("/student/login?");
+    const token = typeof window !== "undefined" ? document.cookie.includes("voter_session_token=") : false;
+
+    if (!isAuthPage && !token) {
+      const params = new URLSearchParams();
+      if (eid) params.set("election", eid);
+      if (aid) params.set("assoc", aid);
+      router.push(`/student/login?${params.toString()}`);
+    }
+  }, [queryElectionId, queryAssocId, pathname, router]);
 
   const handleVoterLogout = () => {
     clearVoterSession();

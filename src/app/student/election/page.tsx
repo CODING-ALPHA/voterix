@@ -59,6 +59,7 @@ function ElectionContent() {
         }
       } catch (error) {
         console.error("Fetch ballot error:", error);
+        setAlert({ message: formatApiErrorMessage(error, "Unable to load ballot details"), type: "error" });
       } finally {
         setIsLoading(false);
       }
@@ -178,7 +179,7 @@ function ElectionContent() {
     } catch (error) {
       console.error("Cast vote error:", error);
       setIsPinModalOpen(false);
-      setAlert({ message: "An error occurred while casting your vote.", type: "error" });
+      setAlert({ message: formatApiErrorMessage(error, "An error occurred while casting your vote."), type: "error" });
     } finally {
       setIsSubmitting(false);
     }

@@ -108,7 +108,8 @@ export function formatApiErrorMessage(
        finalMsg = "This record already exists in the system.";
     }
     
-    return !isJson && !isTraceback && !isDbError && !isGenericHttp;
+    const isPythonError = /^[A-Z][a-zA-Z]+Error:/.test(msg) || msg.includes('AttributeError') || msg.includes('ValueError') || msg.includes('TypeError');
+    return !isJson && !isTraceback && !isDbError && !isPythonError && !isGenericHttp;
   });
 
   if (cleanMessages.length > 0) {
@@ -339,7 +340,14 @@ export async function voterFetch<T = unknown>(
     throw new ApiError(0, "Unable to connect to the server.", undefined, "NETWORK_ERROR");
   }
 
-  const requestId = res.headers.get("X-Request-ID") || undefined;
+  // Handle Voter Session Expiry (401 Unauthorized)
+  if (res.status === 401) {
+    clearVoterSession();
+    if (typeof window !== "undefined") {
+      // Try to find electionId from the path if possible, or just go to general verify
+      window.location.href = "/student/verify?session_expired=1";
+    }
+  }
 
   let data: any = null;
   try {
@@ -359,7 +367,9 @@ export async function voterFetch<T = unknown>(
           errors: errorPayload.errors,
           detail: errorPayload.detail,
         },
-        `Error ${res.status || "Unknown"}`
+        res.status === 401 
+          ? "Your voting session has expired. Please log in again." 
+          : `Error ${res.status || "Unknown"}`
       ),
       errorPayload.errors,
       errorPayload.error_code,
