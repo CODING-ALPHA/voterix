@@ -39,7 +39,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     setActiveAssocId(aid);
 
     // 3. Auth Guard: Check for session token
-    const isAuthPage = pathname === "/student/login" || pathname === "/student/verify" || pathname.startsWith("/student/login?");
+    const isAuthPage = pathname.includes("/login") || pathname.includes("/verify");
     const token = typeof window !== "undefined" ? document.cookie.includes("voter_session_token=") : false;
 
     if (!isAuthPage && !token) {
@@ -78,7 +78,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     return `${href}?${params.toString()}`;
   };
 
-  const isAuthPage = pathname === "/student/login" || pathname === "/student/verify" || pathname.startsWith("/student/login?");
+  const isAuthPage = pathname.includes("/login") || pathname.includes("/verify");
   
   if (isAuthPage) {
     return <>{children}</>;

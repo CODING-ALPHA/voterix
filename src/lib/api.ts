@@ -87,6 +87,13 @@ export function formatApiErrorMessage(
   value: unknown,
   fallback = "Something went wrong. Please try again."
 ): string {
+  // If value is a string, check if it's a technical error we should hide
+  if (typeof value === "string") {
+    const isTechnical = /traceback|psycopg2|column|relation|line \d+|ErrorDetail|AttributeError|ValueError|TypeError|HTTP \d+/i.test(value);
+    if (isTechnical) return fallback;
+    return value.trim() || fallback;
+  }
+
   const messages = Array.from(
     new Set(
       collectErrorMessages(value)
@@ -95,34 +102,29 @@ export function formatApiErrorMessage(
     )
   );
 
-  // If we have messages, filter out any that look like technical JSON or tracebacks
+  // Filter out technical noise from nested objects/arrays
   const cleanMessages = messages.filter(msg => {
-    const isJson = msg.startsWith('{') || msg.startsWith('[');
-    const isTraceback = msg.includes('Traceback') || msg.includes('line ') || msg.includes('File "/');
-    const isDbError = msg.includes('psycopg2') || msg.includes('column "') || msg.includes('relation "');
-    const isGenericHttp = msg.startsWith('HTTP ');
-    
-    // Final polish on the message string
-    let finalMsg = msg;
-    if (finalMsg.toLowerCase().includes("already exists")) {
-       finalMsg = "This record already exists in the system.";
-    }
-    
-    const isPythonError = /^[A-Z][a-zA-Z]+Error:/.test(msg) || msg.includes('AttributeError') || msg.includes('ValueError') || msg.includes('TypeError');
-    return !isJson && !isTraceback && !isDbError && !isPythonError && !isGenericHttp;
+    const isTechnical = /traceback|psycopg2|column|relation|line \d+|ErrorDetail|AttributeError|ValueError|TypeError|HTTP \d+|\{|\}|\[|\]/i.test(msg);
+    return !isTechnical;
   });
 
   if (cleanMessages.length > 0) {
-    return cleanMessages.join(". ");
+    let combined = cleanMessages.join(". ");
+    // Final polish: Map database "already exists" to user-friendly version
+    if (combined.toLowerCase().includes("already exists")) {
+       combined = "This record already exists in our system.";
+    }
+    return combined;
   }
 
-  // Handle common status code fallbacks
+  // Handle common status code fallbacks if we have a status
   if (typeof value === 'object' && value !== null && 'status' in (value as any)) {
     const status = (value as any).status;
-    if (status >= 500) return "Server error. Please contact support or try again later.";
-    if (status === 413) return "The uploaded file is too large.";
-    if (status === 403) return "Access denied. You don't have permission for this.";
-    if (status === 404) return "The requested resource was not found.";
+    if (status >= 500) return "Our servers are having trouble. Please try again later.";
+    if (status === 401) return "Your session has expired. Please log in again.";
+    if (status === 403) return "You don't have permission to perform this action.";
+    if (status === 404) return "The requested information could not be found.";
+    if (status === 429) return "Too many requests. Please wait a moment.";
   }
 
   return fallback;
