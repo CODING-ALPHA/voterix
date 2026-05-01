@@ -78,12 +78,12 @@ function VerificationContent() {
         router.push(otpUrl);
       } else {
         setMatricError(true);
-        setErrorMessage(
-          formatApiErrorMessage(
+        const errStr = formatApiErrorMessage(
             { message: result.message, errors: result.errors },
-            "You are not eligible to participate in this election"
-          )
-        );
+            "Verification failed"
+          );
+        setErrorMessage(errStr);
+        setAlert({ message: errStr, type: "error" });
       }
     } catch (error) {
       console.error("OTP Authentication error:", error);
