@@ -360,6 +360,8 @@ export default function VotersRegistryPage() {
                       <option value="all">All Status</option>
                       <option value="verified">Verified</option>
                       <option value="pending">Pending</option>
+                      <option value="suspicious">Suspicious</option>
+                      <option value="warning">Warning</option>
                       <option value="rejected">Rejected</option>
                    </select>
                 )}
