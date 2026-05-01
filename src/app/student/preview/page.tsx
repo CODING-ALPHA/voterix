@@ -154,7 +154,9 @@ function PreviewContent() {
                                   src={candidate.image}
                                   alt={candidate.name}
                                   fill
+                                  unoptimized
                                   className="object-cover"
+                                  style={{ objectFit: 'cover' }}
                                 />
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-300 text-[10px] md:text-sm">

@@ -314,7 +314,7 @@ function ElectionContent() {
                   <div
                     key={cIdx}
                     onClick={() => handleSelect(position, candidate)}
-                    className={`relative flex flex-col bg-white rounded-xl p-5 pb-6 cursor-pointer transition-all duration-200 border ${
+                    className={`relative flex flex-col bg-white rounded-xl p-3 pb-4 cursor-pointer transition-all duration-200 border ${
                       isSelected
                         ? "border-[#3457B4] ring-4 ring-[#3457B4]/5 shadow-md -translate-y-1"
                         : "border-gray-100 hover:border-gray-200 hover:shadow-sm"
@@ -334,13 +334,15 @@ function ElectionContent() {
                     </div>
 
                     {/* Candidate Image */}
-                    <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden bg-gray-50 border border-gray-50">
+                    <div className="w-full aspect-square relative rounded-lg overflow-hidden bg-gray-50 border border-gray-50">
                       {candidate.image ? (
                         <Image
                           src={candidate.image}
                           alt={candidate.name}
                           fill
+                          unoptimized
                           className="object-cover"
+                          style={{ objectFit: 'cover' }}
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-200 text-2xl">
@@ -351,7 +353,7 @@ function ElectionContent() {
 
                     {/* Candidate Name */}
                     <div className="w-full text-center mt-4">
-                      <h3 className="font-semibold text-gray-900 text-xs uppercase tracking-tight leading-tight px-2">
+                      <h3 className="font-bold text-gray-900 text-[13px] uppercase tracking-tight leading-tight px-2">
                         {candidate.name}
                       </h3>
                     </div>

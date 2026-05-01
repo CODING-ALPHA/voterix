@@ -403,6 +403,7 @@ function PreviewContent() {
                                src={cand.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cand.name)}`} 
                                alt={cand.name} 
                                fill 
+                    unoptimized
                                className="object-cover" 
                              />
                           </div>
