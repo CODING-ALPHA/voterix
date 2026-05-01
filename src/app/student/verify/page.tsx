@@ -69,11 +69,13 @@ function VerificationContent() {
       });
 
       if (result.status === "success") {
+        console.log("OTP Request successful, redirecting...");
         // Store name and matric in short-lived cookies for the next step
         document.cookie = `voter_name=${encodeURIComponent(name)}; path=/; max-age=3600; SameSite=Lax`;
         document.cookie = `voter_matric=${encodeURIComponent(matricNo)}; path=/; max-age=3600; SameSite=Lax`;
+        
         const otpUrl = `/student/verify/otp?email=${encodeURIComponent(email)}&matric=${encodeURIComponent(matricNo)}&assoc=${encodeURIComponent(assocId)}&election=${encodeURIComponent(electionId || "")}`;
-        window.location.href = otpUrl;
+        router.push(otpUrl);
       } else {
         setMatricError(true);
         setErrorMessage(

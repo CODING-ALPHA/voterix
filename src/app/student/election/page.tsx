@@ -84,17 +84,18 @@ function ElectionContent() {
     const positionKey = String(position.uid || position.id || position.title);
     const candidateValue = candidate.uid || candidate.id || candidate.name;
 
-    setSelectedCandidates(prev => ({
-      ...prev,
-      [positionKey]: candidateValue
-    }));
+    setSelectedCandidates(prev => {
+      const newSelections = { ...prev };
+      if (newSelections[positionKey] === candidateValue) {
+        delete newSelections[positionKey];
+      } else {
+        newSelections[positionKey] = candidateValue;
+      }
+      return newSelections;
+    });
   };
 
   const handleCastVoteClick = () => {
-    if (Object.keys(selectedCandidates).length === 0) {
-      setAlert({ message: "Please select at least one candidate", type: "warning" });
-      return;
-    }
     setIsPinModalOpen(true);
   };
 
@@ -386,6 +387,10 @@ function ElectionContent() {
         onClose={() => setIsPinModalOpen(false)}
         onConfirm={handlePinConfirm}
         isLoading={isSubmitting}
+        description={Object.keys(selectedCandidates).length === 0 
+          ? "You haven't selected any candidates. Are you sure you want to cast a blank ballot?" 
+          : "Enter your 6-digit secure voting PIN to cast your vote."
+        }
       />
       <AlertModal
         isOpen={!!alert}
