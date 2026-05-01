@@ -652,6 +652,8 @@ export default function VotersRegistryPage() {
                       className="w-full h-12 px-4 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-[#101828] focus:border-[#405189] transition-all appearance-none cursor-pointer">
                       <option value="Verified">Verified</option>
                       <option value="Pending">Pending</option>
+                      <option value="Suspicious">Suspicious</option>
+                      <option value="Warning">Warning</option>
                       <option value="Rejected">Rejected</option>
                       <option value="Ineligible">Ineligible</option>
                    </select>
