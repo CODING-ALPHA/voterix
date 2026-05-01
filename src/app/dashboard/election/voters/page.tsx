@@ -30,10 +30,12 @@ function ElectionMonitoringContent() {
   } | null>(null);
 
   const [pagination, setPagination] = useState({
-    page: 1,
+    current_page: 1,
     page_size: 10,
-    total_items: 0,
+    total_count: 0,
     total_pages: 1,
+    has_next: false,
+    has_prev: false,
   });
 
   const [statusFilter, setStatusFilter] = useState("all");
@@ -50,7 +52,7 @@ function ElectionMonitoringContent() {
         setVoters(result.data.voters || []);
         if (result.data.pagination) {
           setPagination(result.data.pagination);
-          setCurrentPage(result.data.pagination.page);
+          setCurrentPage(result.data.pagination.current_page);
         }
       }
     } catch (e) {
@@ -272,19 +274,19 @@ function ElectionMonitoringContent() {
                 {pagination.total_pages > 1 && (
                   <div className="px-6 sm:px-8 py-6 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        Page {pagination.page} of {pagination.total_pages} ({pagination.total_items} total)
+                        Page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total)
                      </p>
                      <div className="flex gap-2 w-full sm:w-auto">
                         <button 
-                          disabled={pagination.page === 1}
-                          onClick={() => fetchData(pagination.page - 1)}
+                          disabled={!pagination.has_prev}
+                          onClick={() => fetchData(pagination.current_page - 1)}
                           className="flex-1 sm:flex-none h-10 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
                         >
                            Previous
                         </button>
                         <button 
-                          disabled={pagination.page === pagination.total_pages}
-                          onClick={() => fetchData(pagination.page + 1)}
+                          disabled={!pagination.has_next}
+                          onClick={() => fetchData(pagination.current_page + 1)}
                           className="flex-1 sm:flex-none h-10 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
                         >
                            Next
