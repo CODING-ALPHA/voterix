@@ -23,6 +23,7 @@ export interface Invoice {
   invoice_number: string;
   association_name: string;
   election_title: string;
+  election_publik_id: string;
   total_votes: number;
   price_per_vote: number;
   total_amount: number;
@@ -63,5 +64,11 @@ export function updateInvoiceStatus(invoiceUid: string, status: 'pending' | 'pai
   return apiFetch(`/billing/invoices/${invoiceUid}/`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
+  });
+}
+
+export function deleteAssociation(associationUid: string) {
+  return apiFetch(`/billing/associations/${associationUid}/delete/`, {
+    method: "DELETE",
   });
 }

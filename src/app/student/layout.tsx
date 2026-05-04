@@ -143,7 +143,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="p-4 space-y-2 border-t border-white/10 mt-auto">
           <button 
             className="w-full h-11 flex items-center gap-3 px-4 rounded-xl font-bold text-white/90 hover:bg-white/5 hover:text-white transition-all duration-200"
-            onClick={() => window.open('mailto:support@voterix.com')}
+            onClick={() => window.open('mailto:support@voterix.com.ng')}
           >
             <Headset size={18} strokeWidth={2} />
             <span className="text-xs uppercase tracking-wide">Contact Support</span>

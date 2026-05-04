@@ -84,9 +84,7 @@ export default function InvoicePrintPage() {
             <div className="space-y-2">
               <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest italic">Voterix Election Services</h2>
               <p className="text-gray-500 text-xs leading-relaxed">
-                12th Floor, Innovation Hub<br />
-                Lagos Island, Nigeria<br />
-                <span className="inline-block mt-2 font-bold text-[#3457B4]">support@voterix.com • www.voterix.com</span>
+                <span className="inline-block mt-2 font-bold text-[#3457B4]">support@voterix.com.ng • www.voterix.com.ng</span>
               </p>
             </div>
           </div>
@@ -176,11 +174,15 @@ export default function InvoicePrintPage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-gray-500 font-bold uppercase tracking-tighter">Bank Name:</span>
-                  <span className="text-gray-900 font-black">Voterix Global Bank</span>
+                  <span className="text-gray-900 font-black">GT Bank</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-gray-500 font-bold uppercase tracking-tighter">Account Name:</span>
+                  <span className="text-gray-900 font-black">Adedolapo Atiba</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-gray-500 font-bold uppercase tracking-tighter">Account No:</span>
-                  <span className="text-gray-900 font-black">0123 4567 8901</span>
+                  <span className="text-gray-900 font-black">0729778294</span>
                 </div>
                 <p className="text-[10px] text-blue-400 font-medium italic mt-4">* Please include invoice #{invoice.invoice_number} as payment reference.</p>
               </div>

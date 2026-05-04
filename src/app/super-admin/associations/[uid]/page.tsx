@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getAssociationBillingDetail, updateAssociationPricing, type AssociationBilling, type Invoice } from "@/lib/billing.api";
+import { getAssociationBillingDetail, updateAssociationPricing, deleteAssociation, type AssociationBilling, type Invoice } from "@/lib/billing.api";
+import { deleteElection } from "@/lib/elections.api";
 import { getMediaUrl } from "@/lib/api-client";
 import { 
   ArrowLeft, 
@@ -17,7 +18,8 @@ import {
   Users, 
   X,
   Vote,
-  ArchiveRestore
+  ArchiveRestore,
+  Trash2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -59,6 +61,28 @@ export default function AssociationDetailPage() {
     }
   };
 
+  const handleDeleteAssociation = async () => {
+    if (!window.confirm(`Are you absolutely sure you want to delete '${data?.name}'? This will permanently remove all elections, voters, and billing records.`)) return;
+    
+    try {
+      await deleteAssociation(uid);
+      router.push("/super-admin/associations");
+    } catch (err) {
+      alert("Failed to delete association");
+    }
+  };
+
+  const handleDeleteElection = async (publikId: string, title: string) => {
+    if (!window.confirm(`Delete election '${title}'? This will also remove its associated invoice.`)) return;
+    
+    try {
+      await deleteElection(publikId);
+      fetchData();
+    } catch (err) {
+      alert("Failed to delete election");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[400px]">
@@ -79,17 +103,27 @@ export default function AssociationDetailPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Breadcrumb / Back */}
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={() => router.back()}
-          className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 transition-all text-gray-400 hover:text-gray-900 shadow-sm"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Association Registry</h2>
-          <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.back()}
+            className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 transition-all text-gray-400 hover:text-gray-900 shadow-sm"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Association Registry</h2>
+            <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+          </div>
         </div>
+
+        <button 
+          onClick={handleDeleteAssociation}
+          className="flex items-center gap-2 h-10 px-6 border border-red-100 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-all shadow-sm"
+        >
+          <Trash2 size={16} />
+          Delete Association
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -193,9 +227,17 @@ export default function AssociationDetailPage() {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <Link href={`/super-admin/bills/${inv.uid}`} className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
-                        <ExternalLink size={16} />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/super-admin/bills/${inv.uid}`} className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
+                          <ExternalLink size={16} />
+                        </Link>
+                        <button 
+                          onClick={() => handleDeleteElection(inv.election_publik_id, inv.election_title)}
+                          className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
