@@ -74,6 +74,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
+  // ── Setup Fee Guard ────────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!user || user.is_staff) return;
+    
+    if (!user.is_setup_fee_paid && pathname !== "/dashboard/payment-required") {
+      router.push("/dashboard/payment-required");
+    } else if (user.is_setup_fee_paid && pathname === "/dashboard/payment-required") {
+      router.push("/dashboard");
+    }
+  }, [user, pathname, router]);
+
   return (
     <div className="flex h-screen bg-[#F8F9FB] font-sans overflow-hidden">
       {/* Mobile Sidebar Overlay */}
