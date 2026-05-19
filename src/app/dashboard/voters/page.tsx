@@ -602,7 +602,7 @@ export default function VotersRegistryPage() {
                     <Upload size={24} className="text-gray-300" />
                     <span className="text-sm font-bold">{csvFile ? csvFile.name : "Select CSV Personnel List"}</span>
                  </div>
-                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={e => e.target.files && setCsvFile(e.target.files[0])} />
+                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={e => e.target.files && setCsvFile(e.target.files[0])} />
               </div>
               <button onClick={handleUploadCSV} disabled={isUploading} className="w-full h-12 bg-[#243160] text-white rounded-2xl font-bold shadow-lg shadow-[#243160]/20 disabled:opacity-50">
                  {isUploading ? "Uploading Data..." : "Finalize Import"}
