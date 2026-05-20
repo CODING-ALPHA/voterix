@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ArrowUpDown, Plus, MoreHorizontal, Link as LinkIcon, Copy, Check } from "lucide-react";
+import { Search, ArrowUpDown, Plus, MoreHorizontal, Link as LinkIcon, Copy, Check, Users } from "lucide-react";
 import EditElectionModal from "@/components/EditElectionModal";
+import ManageCandidatesModal from "@/components/ManageCandidatesModal";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api-client";
 
 export default function ElectionsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [selectedElection, setSelectedElection] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,6 +68,11 @@ export default function ElectionsPage() {
   const handleEdit = (election: any) => {
     setSelectedElection(election);
     setIsEditModalOpen(true);
+  };
+
+  const handleManageCandidates = (election: any) => {
+    setSelectedElection(election);
+    setIsManageModalOpen(true);
   };
 
   const handleCopyLink = (election: any) => {
@@ -209,16 +216,22 @@ export default function ElectionsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1 border-t border-gray-50 pt-4">
-                    <button 
-                      onClick={() => handleEdit(election)}
-                      className="flex-1 h-9 rounded-lg bg-[#1C1F26] text-white text-xs font-semibold hover:bg-black transition-all flex items-center justify-center gap-2"
-                    >
-                      Edit Election
-                    </button>
-                    <button className="h-9 w-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
+                  <div className="flex flex-col gap-2 pt-4 border-t border-gray-50">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleManageCandidates(election)}
+                        className="flex-1 h-9 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Users size={14} />
+                        Candidates
+                      </button>
+                      <button 
+                        onClick={() => handleEdit(election)}
+                        className="flex-1 h-9 rounded-lg bg-[#1C1F26] text-white text-xs font-semibold hover:bg-black transition-all flex items-center justify-center gap-2"
+                      >
+                        Edit Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -275,10 +288,19 @@ export default function ElectionsPage() {
                             {copiedId === election.id ? "Copied" : "Copy Link"}
                           </button>
                           <button 
-                            onClick={() => handleEdit(election)}
-                            className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                            onClick={() => handleManageCandidates(election)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 whitespace-nowrap"
+                            title="Manage Candidates & Positions"
                           >
-                            <MoreHorizontal size={16} className="text-gray-500" />
+                            <Users size={14} />
+                            Candidates
+                          </button>
+                          <button 
+                            onClick={() => handleEdit(election)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 whitespace-nowrap"
+                            title="Edit Election Details"
+                          >
+                            Edit
                           </button>
                         </div>
                       </td>
@@ -296,6 +318,12 @@ export default function ElectionsPage() {
         onClose={() => setIsEditModalOpen(false)} 
         election={selectedElection}
         onSaved={fetchElections}
+      />
+
+      <ManageCandidatesModal
+        isOpen={isManageModalOpen}
+        onClose={() => setIsManageModalOpen(false)}
+        election={selectedElection}
       />
     </div>
   );
