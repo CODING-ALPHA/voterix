@@ -57,7 +57,7 @@ export default function ElectionsPage() {
     }
   }, [accessToken]);
 
-  const filteredElections = elections.filter(el => 
+  const filteredElections = elections.filter(el =>
     el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     el.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -78,10 +78,10 @@ export default function ElectionsPage() {
   const handleCopyLink = (election: any) => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
     const assocId = user?.publik_id || "";
-    
+
     // Format: /student/verify?assoc=ASSOC_ID&election=ELECT_ID
     const link = `${baseUrl}/student/verify?assoc=${assocId}&election=${election.publik_id}`;
-    
+
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(link);
       setCopiedId(election.id);
@@ -94,7 +94,7 @@ export default function ElectionsPage() {
       {/* Header Area */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-lg md:text-xl font-semibold text-gray-900">Elections</h1>
-        
+
         {!isEmpty && (
           <div className="flex flex-wrap items-center gap-3">
             {/* Search Bar */}
@@ -138,13 +138,13 @@ export default function ElectionsPage() {
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-8 md:mt-12">
             {/* Central Illustration */}
             <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-50 rounded-full flex items-center justify-center mb-6 md:mb-8 overflow-hidden">
-               <Image 
-                 src="/users-03.svg"
-                 alt="No Elections"
-                 width={48}
-                 height={48}
-                 className="opacity-40"
-               />
+              <Image
+                src="/users-03.svg"
+                alt="No Elections"
+                width={48}
+                height={48}
+                className="opacity-40"
+              />
             </div>
 
             <h3 className="text-gray-900 text-base md:text-lg font-semibold mb-2 tracking-tight">
@@ -164,13 +164,13 @@ export default function ElectionsPage() {
           </div>
         ) : isFilterEmpty ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-             <p className="text-gray-500 font-medium">No elections match "{searchQuery}"</p>
-             <button 
-               onClick={() => setSearchQuery("")}
-               className="mt-2 text-blue-600 text-sm font-semibold hover:underline"
-             >
-               Clear search
-             </button>
+            <p className="text-gray-500 font-medium">No elections match "{searchQuery}"</p>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="mt-2 text-blue-600 text-sm font-semibold hover:underline"
+            >
+              Clear search
+            </button>
           </div>
         ) : (
           <>
@@ -197,7 +197,7 @@ export default function ElectionsPage() {
                     <p className="text-[10px] font-medium text-gray-500 truncate flex-1 leading-none">
                       {window.location.origin}/student/verify?assoc={user?.publik_id}&election={election.publik_id}
                     </p>
-                    <button 
+                    <button
                       onClick={() => handleCopyLink(election)}
                       className="text-indigo-600 hover:text-indigo-700 transition-colors shrink-0"
                     >
@@ -218,14 +218,14 @@ export default function ElectionsPage() {
 
                   <div className="flex flex-col gap-2 pt-4 border-t border-gray-50">
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => handleManageCandidates(election)}
                         className="flex-1 h-9 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                       >
                         <Users size={14} />
                         Candidates
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEdit(election)}
                         className="flex-1 h-9 rounded-lg bg-[#1C1F26] text-white text-xs font-semibold hover:bg-black transition-all flex items-center justify-center gap-2"
                       >
@@ -275,19 +275,18 @@ export default function ElectionsPage() {
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={() => handleCopyLink(election)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
-                              copiedId === election.id 
-                                ? "bg-green-50 text-green-600 border-green-100" 
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${copiedId === election.id
+                                ? "bg-green-50 text-green-600 border-green-100"
                                 : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 whitespace-nowrap"
-                            }`}
+                              }`}
                             title="Copy Voting Link"
                           >
                             {copiedId === election.id ? <Check size={14} /> : <LinkIcon size={14} />}
                             {copiedId === election.id ? "Copied" : "Copy Link"}
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleManageCandidates(election)}
                             className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 whitespace-nowrap"
                             title="Manage Candidates & Positions"
@@ -295,7 +294,7 @@ export default function ElectionsPage() {
                             <Users size={14} />
                             Candidates
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleEdit(election)}
                             className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 whitespace-nowrap"
                             title="Edit Election Details"
@@ -313,12 +312,15 @@ export default function ElectionsPage() {
         )}
       </div>
 
-      <EditElectionModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
+      <EditElectionModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
         election={selectedElection}
         onSaved={fetchElections}
       />
+
+
+
 
       <ManageCandidatesModal
         isOpen={isManageModalOpen}
