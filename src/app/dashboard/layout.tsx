@@ -25,11 +25,18 @@ import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
   const [hasUnread, setHasUnread] = React.useState(false);
+
+  // Redirect if not authenticated
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   React.useEffect(() => {
     if (!user) return;
@@ -84,6 +91,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push("/dashboard");
     }
   }, [user, pathname, router]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-[#3457B4] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="flex h-screen bg-[#F8F9FB] font-sans overflow-hidden">

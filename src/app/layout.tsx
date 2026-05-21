@@ -33,9 +33,69 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
-  title: "Voterix",
-  description: "Fast, reliable and secure voting for any scale.",
+  metadataBase: new URL("https://voterix.com"),
+  title: {
+    default: "Voterix | Fast, Secure & Reliable Online Voting Platform",
+    template: "%s | Voterix"
+  },
+  description: "Voterix is a state-of-the-art secure online voting platform for elections of any scale. Easy setup, verified voter authentication, real-time live results, and audit-ready security.",
+  keywords: [
+    "online voting",
+    "secure election",
+    "electronic voting system",
+    "student government election",
+    "association voting",
+    "board elections",
+    "digital polling",
+    "voter verification",
+    "live election results",
+    "e-voting platform",
+    "Voterix"
+  ],
+  authors: [{ name: "4orge Tech", url: "https://x.com/4orge_" }],
+  creator: "4orge Tech",
+  publisher: "Voterix",
+  robots: {
+    index: true,
+    follow: true,
+    nocache: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://voterix.com",
+    title: "Voterix | Secure Online Voting Platform",
+    description: "Run secure, fast, and transparent elections with Voterix. Designed for student government, associations, board votes, and large-scale polls.",
+    siteName: "Voterix",
+    images: [
+      {
+        url: "/cover.svg",
+        width: 1150,
+        height: 269,
+        alt: "Voterix Online Voting Platform Banner",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Voterix | Secure Online Voting Platform",
+    description: "Run secure, fast, and transparent elections with Voterix.",
+    creator: "@4orge_",
+    images: ["/cover.svg"],
+  },
+  alternates: {
+    canonical: "/",
+  },
 };
+
 
 import { AuthProvider } from "@/context/AuthContext";
 

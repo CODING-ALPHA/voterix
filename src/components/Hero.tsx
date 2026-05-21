@@ -38,7 +38,7 @@ const Hero = () => {
             lineHeight: '1.6'
           }}
         >
-          No more lines. No more stress. Just votes that count. Electify turns slow, 
+          No more lines. No more stress. Just votes that count. Voterix turns slow, 
           manual voting into a sleek, digital experience your students will actually enjoy.
         </p>
 

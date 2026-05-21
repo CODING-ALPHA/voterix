@@ -15,6 +15,7 @@ export interface AssociationBilling {
   profile_picture?: string;
   price_per_vote: number;
   base_fee: number;
+  is_setup_fee_paid?: boolean;
   total_elections: number;
   total_votes: number;
 }

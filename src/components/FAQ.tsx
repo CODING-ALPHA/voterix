@@ -38,7 +38,7 @@ const FAQ = () => {
   };
 
   return (
-    <section className="w-full bg-[#ECEFF3] py-[clamp(60px,10vw,120px)] overflow-hidden">
+    <section id="faqs" className="w-full bg-[#ECEFF3] py-[clamp(60px,10vw,120px)] overflow-hidden">
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 lg:px-[80px] flex flex-col items-center gap-[clamp(40px,8vw,60px)]">
 
         {/* Header */}

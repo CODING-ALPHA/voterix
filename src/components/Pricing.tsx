@@ -71,7 +71,7 @@ const Pricing = () => {
     <section id="pricing" className="w-full bg-[#EFF2F4] py-16 md:py-24">
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 lg:px-[80px] flex flex-col items-center gap-[clamp(40px,6vw,80px)]">
         {/* Header content */}
-        <div className="flex flex-col items-center gap-4 text-center px-4">
+        <div className="flex flex-col items-center gap-4 text-center w-full">
           <h2 
             className="font-black text-[clamp(32px,5vw,48px)] leading-[1.1] tracking-tight"
             style={{ 
@@ -122,9 +122,9 @@ const Pricing = () => {
             ]}
           />
           <PriceCard 
-            title="Premium"
-            price="₦150"
-            unit="/ Voter"
+            title="Custom"
+            price="₦250"
+            unit="/ Vote"
             isPremium={true}
             description="₦10,000 Base Setup Fee applies."
             features={[
