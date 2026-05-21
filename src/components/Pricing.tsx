@@ -5,12 +5,14 @@ import React from "react";
 const PriceCard = ({ 
   title, 
   price, 
+  unit,
   description, 
   features, 
   isPremium = false 
 }: { 
   title: string, 
   price: string, 
+  unit?: string,
   description: string, 
   features: string[], 
   isPremium?: boolean 
@@ -28,7 +30,7 @@ const PriceCard = ({
       </h3>
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="text-[clamp(26px,4.5vw,42px)] font-black font-[family-name:var(--font-lato)] leading-tight whitespace-nowrap">{price}</span>
-        <span className="text-[clamp(13px,1.5vw,18px)] font-semibold font-[family-name:var(--font-lato)] opacity-80 whitespace-nowrap">/ Election</span>
+        {unit && <span className="text-[clamp(13px,1.5vw,18px)] font-semibold font-[family-name:var(--font-lato)] opacity-80 whitespace-nowrap">{unit}</span>}
       </div>
       <p className="text-[clamp(13px,1.5vw,15px)] font-[family-name:var(--font-mulish)] font-normal leading-relaxed opacity-80">
         {description}
@@ -69,7 +71,7 @@ const Pricing = () => {
     <section id="pricing" className="w-full bg-[#EFF2F4] py-16 md:py-24">
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 lg:px-[80px] flex flex-col items-center gap-[clamp(40px,6vw,80px)]">
         {/* Header content */}
-        <div className="flex flex-col items-center gap-4 text-center px-4">
+        <div className="flex flex-col items-center gap-4 text-center w-full">
           <h2 
             className="font-black text-[clamp(32px,5vw,48px)] leading-[1.1] tracking-tight"
             style={{ 
@@ -96,39 +98,42 @@ const Pricing = () => {
           <PriceCard 
             title="Basic"
             price="₦20,000"
-            description="Best for Small Teams or Individuals."
+            unit="/ Election"
+            description="Up to 100 Voters included."
             features={[
-              "Up to 400 voters",
-              "Email notifications",
-              "Live results view",
-              "Basic admin dashboard"
+              "100 Verified Voters",
+              "Email & PIN notifications",
+              "Live results monitoring",
+              "Basic admin dashboard",
+              "Standard support"
             ]}
           />
           <PriceCard 
             title="Standard"
-            price="₦20,000"
-            description="Ideal for Growing Companies."
+            price="₦40,000"
+            unit="/ Election"
+            description="Up to 200 Voters included."
             features={[
-              "Up to 1000 voters",
+              "200 Verified Voters",
               "All features in Basic",
-              "2 admin team members",
-              "Branded election link",
-              "Export results (CSV or PDF)"
+              "Multiple admin members",
+              "Branded election links",
+              "PDF & CSV results export"
             ]}
           />
           <PriceCard 
-            title="Premium"
-            price="₦20,000"
+            title="Custom"
+            price="₦250"
+            unit="/ Vote"
             isPremium={true}
-            description="Ultimate for Enterprise Solutions."
+            description="₦10,000 Base Setup Fee applies."
             features={[
-              "Up to 2000 voters",
-              "All features in Scale",
-              "Add up to 5 admins",
-              "Post-election analytics",
-              "Run multiple elections",
-              "48-hour voting window",
-              "Customizable settings"
+              "Custom Voting Volume",
+              "Priority setup & support",
+              "Advanced analytics",
+              "Dedicated account manager",
+              "Customizable ballot themes",
+              "White-label options"
             ]}
           />
         </div>

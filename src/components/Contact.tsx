@@ -4,13 +4,13 @@ import React from "react";
 
 const Contact = () => {
   return (
-    <section className="w-full bg-[#EFF2F4] py-[clamp(60px,10vw,120px)]">
+    <section id="contact" className="w-full bg-[#EFF2F4] py-[clamp(60px,10vw,120px)]">
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 lg:px-[80px]">
         
         <div className="bg-white rounded-[20px] border border-[#E5F4F2] p-[clamp(32px,5vw,60px)] shadow-[0_34.85px_48.34px_rgba(51,102,255,0.05)] w-full flex flex-col gap-[clamp(40px,5vw,60px)]">
           
           {/* Header */}
-          <div className="flex flex-col gap-2.5 w-full">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-2.5 w-full">
             <h2 
               className="text-[#2D2D2D] font-black"
               style={{
@@ -22,7 +22,7 @@ const Contact = () => {
               Still Have Questions?
             </h2>
             <p 
-              className="text-[#2D2D2D] font-normal"
+              className="text-[#2D2D2D] font-normal max-w-2xl"
               style={{
                 fontFamily: 'var(--font-mulish)',
                 fontSize: 'clamp(15px, 1.5vw, 16px)',
@@ -37,9 +37,9 @@ const Contact = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-[clamp(40px,5vw,80px)]">
             
             {/* Left Column: Contact Info */}
-            <div className="flex flex-col justify-between items-start gap-10">
+            <div className="flex flex-col justify-between items-center lg:items-start text-center lg:text-left gap-10">
               
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col items-center lg:items-start gap-5">
                 {/* Phone */}
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 flex items-center justify-center text-[#3056D3]">
@@ -59,16 +59,21 @@ const Contact = () => {
                       <path d="M3 8L12 13L21 8" stroke="currentColor" strokeWidth="1.5"/>
                     </svg>
                   </div>
-                  <span className="text-[#2D2D2D] text-[16px] font-[family-name:var(--font-mulish)]">Electpoll@gmail.com</span>
+                  <a 
+                    href="mailto:4orgehub@gmail.com" 
+                    className="text-[#2D2D2D] hover:text-[#3056D3] transition-colors text-[16px] font-[family-name:var(--font-mulish)]"
+                  >
+                    4orgehub@gmail.com
+                  </a>
                 </div>
               </div>
 
               {/* Socials */}
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col items-center lg:items-start gap-5">
                 <h4 className="text-[#2D2D2D] text-[21px] font-[family-name:var(--font-poppins)] font-semibold">
                   Connect with us
                 </h4>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center lg:justify-start gap-4">
                   {/* Social Circles */}
                   <div className="w-8 h-8 rounded-full bg-[#E5F4F2] flex items-center justify-center text-[#2D2D2D] hover:bg-[#3457B4] hover:text-white transition-colors cursor-pointer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -112,7 +117,7 @@ const Contact = () => {
                     id="fullName"
                     type="text" 
                     placeholder="Full Name"
-                    className="w-full h-full bg-transparent text-[#2D2D2D] font-[family-name:var(--font-mulish)] text-[16px] placeholder:text-[#A0A0A0] focus:outline-none"
+                    className="w-full h-full bg-transparent text-[#2D2D2D] font-[family-name:var(--font-mulish)] text-[16px] placeholder:text-[#606060] focus:outline-none"
                   />
                 </div>
 
@@ -132,7 +137,7 @@ const Contact = () => {
                     id="email"
                     type="email" 
                     placeholder="Email"
-                    className="w-full h-full bg-transparent text-[#2D2D2D] font-[family-name:var(--font-mulish)] text-[16px] placeholder:text-[#A0A0A0] focus:outline-none"
+                    className="w-full h-full bg-transparent text-[#2D2D2D] font-[family-name:var(--font-mulish)] text-[16px] placeholder:text-[#606060] focus:outline-none"
                   />
                 </div>
               </div>

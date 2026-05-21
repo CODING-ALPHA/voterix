@@ -3,9 +3,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex h-[70px] items-center justify-center bg-[#F1F3F5] border-b border-black/5">
@@ -26,22 +29,45 @@ const Navbar = () => {
       {/* Desktop Nav Links and CTA grouped to the right */}
       <div className="hidden md:flex flex-1 justify-end items-center gap-6 lg:gap-8">
         <div className="flex items-center gap-6 lg:gap-8 pr-2 lg:pr-4">
-          {["Home", "About", "Pricing"].map((item) => (
-            <Link
-              key={item}
-              href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-              className="font-normal transition-opacity hover:opacity-70"
-              style={{
-                color: '#111',
-                fontFamily: 'var(--font-poppins)',
-                fontSize: '14.993px',
-                letterSpacing: '-0.136px',
-                lineHeight: 'normal'
-              }}
-            >
-              {item}
-            </Link>
-          ))}
+          {["Home", "About", "Pricing"].map((item) => {
+            const targetHash = item === "Home" ? "#" : item === "About" ? "#about" : "#pricing";
+            
+            if (isHome) {
+              return (
+                <a
+                  key={item}
+                  href={targetHash}
+                  className="font-normal transition-opacity hover:opacity-70"
+                  style={{
+                    color: '#111',
+                    fontFamily: 'var(--font-poppins)',
+                    fontSize: '14.993px',
+                    letterSpacing: '-0.136px',
+                    lineHeight: 'normal'
+                  }}
+                >
+                  {item}
+                </a>
+              );
+            }
+
+            return (
+              <Link
+                key={item}
+                href={`/${targetHash}`}
+                className="font-normal transition-opacity hover:opacity-70"
+                style={{
+                  color: '#111',
+                  fontFamily: 'var(--font-poppins)',
+                  fontSize: '14.993px',
+                  letterSpacing: '-0.136px',
+                  lineHeight: 'normal'
+                }}
+              >
+                {item}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-4 lg:gap-6">
@@ -88,16 +114,33 @@ const Navbar = () => {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 bg-[#F1F3F5] z-40 flex flex-col items-center justify-center gap-10 transition-all duration-500 ease-in-out md:hidden ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-full invisible'}`}>
           <div className="flex flex-col items-center gap-8">
-            {["Home", "About", "Pricing"].map((item) => (
-              <Link
-                key={item}
-                href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                onClick={() => setIsOpen(false)}
-                className="text-2xl font-bold text-[#000840] hover:text-[#405189] transition-colors font-[family-name:var(--font-manrope)]"
-              >
-                {item}
-              </Link>
-            ))}
+            {["Home", "About", "Pricing"].map((item) => {
+              const targetHash = item === "Home" ? "#" : item === "About" ? "#about" : "#pricing";
+              
+              if (isHome) {
+                return (
+                  <a
+                    key={item}
+                    href={targetHash}
+                    onClick={() => setIsOpen(false)}
+                    className="text-2xl font-bold text-[#000840] hover:text-[#405189] transition-colors font-[family-name:var(--font-manrope)]"
+                  >
+                    {item}
+                  </a>
+                );
+              }
+
+              return (
+                <Link
+                  key={item}
+                  href={`/${targetHash}`}
+                  onClick={() => setIsOpen(false)}
+                  className="text-2xl font-bold text-[#000840] hover:text-[#405189] transition-colors font-[family-name:var(--font-manrope)]"
+                >
+                  {item}
+                </Link>
+              );
+            })}
           </div>
 
           <div className="flex flex-col items-center gap-6 w-full mt-2">

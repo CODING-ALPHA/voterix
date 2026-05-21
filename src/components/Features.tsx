@@ -20,7 +20,7 @@ const FeatureCard = ({ icon, title, className = "" }: { icon: string | React.Rea
 
 const Features = () => {
   return (
-    <section className="w-full bg-[#F1F3F5] py-16 md:py-24 flex flex-col items-center gap-[60px] overflow-hidden">
+    <section id="services" className="w-full bg-[#F1F3F5] py-16 md:py-24 flex flex-col items-center gap-[60px] overflow-hidden">
       {/* Top Headline - Contained to the grid width */}
       <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 lg:px-[80px]">
         <h2 
@@ -38,14 +38,27 @@ const Features = () => {
         </h2>
       </div>
 
-      <div className="w-full grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-4 items-center">
-        {/* Right: Features Content - Comes FIRST on mobile, SECOND on desktop */}
-        <div className="flex flex-col gap-[clamp(30px,4vw,48px)] w-full px-6 md:px-10 lg:pl-0 lg:pr-[80px] lg:max-w-[700px] lg:mx-auto lg:order-2">
-           <div className="flex flex-col gap-5">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 lg:gap-4 items-center">
+        {/* Left: Dashboard Mockup Rendering - Comes FIRST on mobile, FIRST on desktop */}
+        <div className="w-full relative -ml-4 lg:-ml-12 pointer-events-none overflow-hidden">
+          <div className="relative bg-transparent">
+             <Image 
+               src="/features2.svg" 
+               alt="Voterix Admin Dashboard" 
+               width={1200} 
+               height={900} 
+               className="w-full h-auto scale-95 transform-gpu origin-left"
+             />
+          </div>
+        </div>
+
+        {/* Right: Features Content - Comes SECOND on mobile, SECOND on desktop */}
+        <div className="flex flex-col gap-[clamp(30px,4vw,48px)] w-full px-6 md:px-10 lg:pl-0 lg:pr-[80px] lg:max-w-[700px] lg:mx-auto">
+           <div className="flex flex-col items-center lg:items-start text-center lg:text-left gap-5 w-full">
               <h3 className="text-[#525252] font-bold leading-tight" style={{ fontSize: 'clamp(24px, 4vw, 32px)', fontFamily: 'var(--font-poppins)' }}>
                 Our features
               </h3>
-              <p className="text-[#2D2D2D] font-normal leading-relaxed max-w-lg opacity-80" style={{ fontSize: 'clamp(14px, 2vw, 18px)', fontFamily: 'var(--font-mulish)' }}>
+              <p className="text-[#2D2D2D] font-normal leading-relaxed max-w-lg opacity-80 lg:mx-0 mx-auto" style={{ fontSize: 'clamp(14px, 2vw, 18px)', fontFamily: 'var(--font-mulish)' }}>
                 Few good reasons why you should use voterix for your elections.
               </p>
            </div>
@@ -68,19 +81,6 @@ const Features = () => {
                 className="w-full" 
               />
            </div>
-        </div>
-
-        {/* Left: Dashboard Mockup Rendering - Comes SECOND on mobile, FIRST on desktop */}
-        <div className="w-full relative lg:order-1 -ml-4 lg:-ml-12 pointer-events-none overflow-hidden pb-12 lg:pb-0">
-          <div className="relative bg-transparent">
-             <Image 
-               src="/features2.svg" 
-               alt="Voterix Admin Dashboard" 
-               width={1200} 
-               height={900} 
-               className="w-full h-auto scale-95 transform-gpu origin-left"
-             />
-          </div>
         </div>
       </div>
     </section>
