@@ -18,7 +18,6 @@ export interface AssociationBilling {
   is_setup_fee_paid?: boolean;
   total_elections: number;
   total_votes: number;
-  is_setup_fee_paid: boolean;
 }
 
 export interface Invoice {
