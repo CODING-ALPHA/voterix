@@ -84,9 +84,7 @@ export default function InvoicePrintPage() {
             <div className="space-y-2">
               <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest italic">Voterix Election Services</h2>
               <p className="text-gray-500 text-xs leading-relaxed">
-                12th Floor, Innovation Hub<br />
-                Lagos Island, Nigeria<br />
-                <span className="inline-block mt-2 font-bold text-[#3457B4]">support@voterix.com • www.voterix.com</span>
+                <span className="inline-block mt-2 font-bold text-[#3457B4]">support@voterix.com.ng • www.voterix.com.ng</span>
               </p>
             </div>
           </div>
@@ -149,7 +147,7 @@ export default function InvoicePrintPage() {
               <tr>
                 <td className="px-10 py-10 max-w-sm">
                   <p className="text-base font-black text-gray-900 mb-1">Election Vote Processing</p>
-                  <p className="text-xs text-gray-400 leading-relaxed">Platform usage fee for encrypted digital participation, results auditing, and secure storage.</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">Platform usage fee for encrypted digital participation and secure storage.</p>
                 </td>
                 <td className="px-10 py-10 text-center">
                   <div className="inline-flex flex-col items-center">
@@ -161,9 +159,26 @@ export default function InvoicePrintPage() {
                   ₦{invoice.price_per_vote}
                 </td>
                 <td className="px-10 py-10 text-right text-xl font-black text-gray-900">
-                  ₦{invoice.total_amount.toLocaleString()}
+                  ₦{(invoice.total_votes * invoice.price_per_vote).toLocaleString()}
                 </td>
               </tr>
+              {invoice.base_fee > 0 && (
+                <tr>
+                  <td className="px-10 py-10 max-w-sm">
+                    <p className="text-base font-black text-gray-900 mb-1">Base Setup Fee</p>
+                    <p className="text-xs text-gray-400 leading-relaxed">Administrative and technical setup fee for the election instance.</p>
+                  </td>
+                  <td className="px-10 py-10 text-center">
+                    <span className="text-lg font-black text-gray-400">-</span>
+                  </td>
+                  <td className="px-10 py-10 text-center text-sm font-bold text-gray-900">
+                    ₦{invoice.base_fee.toLocaleString()}
+                  </td>
+                  <td className="px-10 py-10 text-right text-xl font-black text-gray-900">
+                    ₦{invoice.base_fee.toLocaleString()}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -176,11 +191,15 @@ export default function InvoicePrintPage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-[11px]">
                   <span className="text-gray-500 font-bold uppercase tracking-tighter">Bank Name:</span>
-                  <span className="text-gray-900 font-black">Voterix Global Bank</span>
+                  <span className="text-gray-900 font-black">GT Bank</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-gray-500 font-bold uppercase tracking-tighter">Account Name:</span>
+                  <span className="text-gray-900 font-black">Adedolapo Atiba</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-gray-500 font-bold uppercase tracking-tighter">Account No:</span>
-                  <span className="text-gray-900 font-black">0123 4567 8901</span>
+                  <span className="text-gray-900 font-black">0729778294</span>
                 </div>
                 <p className="text-[10px] text-blue-400 font-medium italic mt-4">* Please include invoice #{invoice.invoice_number} as payment reference.</p>
               </div>

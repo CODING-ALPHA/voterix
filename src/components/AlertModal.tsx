@@ -120,9 +120,10 @@ interface PinModalProps {
   onClose: () => void;
   onConfirm: (pin: string) => void;
   isLoading?: boolean;
+  description?: string;
 }
 
-export function PinModal({ isOpen, onClose, onConfirm, isLoading }: PinModalProps) {
+export function PinModal({ isOpen, onClose, onConfirm, isLoading, description }: PinModalProps) {
   const [pin, setPin] = React.useState("");
   const [showPin, setShowPin] = React.useState(false);
 
@@ -161,7 +162,7 @@ export function PinModal({ isOpen, onClose, onConfirm, isLoading }: PinModalProp
 
           <h2 className="text-lg font-bold text-gray-900 mb-1">Enter Voting PIN</h2>
           <p className="text-sm text-gray-500 font-medium mb-6">
-            Enter your 6-digit secure voting PIN to cast your vote.
+            {description || "Enter your 6-digit secure voting PIN to cast your vote."}
           </p>
 
           <div className="w-full mb-6 space-y-1.5">

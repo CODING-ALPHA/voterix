@@ -9,6 +9,7 @@ export interface AssociationProfile {
   publik_id: string;
   email: string;
   is_staff: boolean;
+  is_setup_fee_paid: boolean;
   uploaded_elections: string;
   completed_elections: string;
   profile_picture?: string;

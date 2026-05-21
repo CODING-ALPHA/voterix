@@ -47,6 +47,7 @@ type VoterRow = {
   email: string;
   phone: string;
   status: string;
+  whatsappLink?: string;
 };
 
 const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
@@ -101,8 +102,17 @@ function mapVoter(raw: any): VoterRow {
     email: raw?.email || "",
     phone: raw?.whatsapp_number || raw?.phone_number || "",
     status: toTitleCase(String(raw?.eligibility_status || raw?.status || "pending")),
+    whatsappLink: raw?.verification_link || raw?.enquiry_link || undefined,
   };
 }
+
+const getStatusStyles = (status: string) => {
+  const s = status.toLowerCase();
+  if (s === "verified") return "bg-green-50 text-green-600 border-green-100";
+  if (s === "suspicious" || s === "warning") return "bg-amber-50 text-amber-600 border-amber-100";
+  if (s === "ineligible" || s === "rejected") return "bg-red-50 text-red-600 border-red-100";
+  return "bg-blue-50 text-blue-600 border-blue-100"; // Pending / Default
+};
 
 export default function VotersRegistryPage() {
   const { user, accessToken } = useAuth();
@@ -350,6 +360,8 @@ export default function VotersRegistryPage() {
                       <option value="all">All Status</option>
                       <option value="verified">Verified</option>
                       <option value="pending">Pending</option>
+                      <option value="suspicious">Suspicious</option>
+                      <option value="warning">Warning</option>
                       <option value="rejected">Rejected</option>
                    </select>
                 )}
@@ -458,9 +470,22 @@ export default function VotersRegistryPage() {
                                   <td className="px-6 py-4 text-xs font-semibold text-gray-600">{voter.email}</td>
                                   <td className="px-6 py-4 text-xs font-bold text-gray-400">{voter.phone}</td>
                                   <td className="px-6 py-4">
-                                     <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${voter.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                        {voter.status}
-                                     </span>
+                                     <div className="flex items-center gap-3">
+                                        <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyles(voter.status)}`}>
+                                           {voter.status}
+                                        </span>
+                                        {voter.status.toLowerCase() !== "verified" && voter.whatsappLink && (
+                                           <a 
+                                             href={voter.whatsappLink} 
+                                             target="_blank" 
+                                             rel="noopener noreferrer"
+                                             className="p-1.5 bg-[#25D366]/10 text-[#25D366] rounded-lg hover:bg-[#25D366]/20 transition-all"
+                                             title="Verify via WhatsApp"
+                                           >
+                                              <MessageSquare size={14} fill="currentColor" />
+                                           </a>
+                                        )}
+                                     </div>
                                   </td>
                                   <td className="px-8 py-4 text-right relative">
                                      <button 
@@ -510,9 +535,21 @@ export default function VotersRegistryPage() {
                                </button>
                             </div>
                             <div className="flex items-center justify-between">
-                               <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${voter.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                  {voter.status}
-                               </span>
+                               <div className="flex items-center gap-2">
+                                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${getStatusStyles(voter.status)}`}>
+                                     {voter.status}
+                                  </span>
+                                  {voter.status.toLowerCase() !== "verified" && voter.whatsappLink && (
+                                     <a 
+                                       href={voter.whatsappLink} 
+                                       target="_blank" 
+                                       rel="noopener noreferrer"
+                                       className="p-1 bg-[#25D366]/10 text-[#25D366] rounded-md"
+                                     >
+                                        <MessageSquare size={12} fill="currentColor" />
+                                     </a>
+                                  )}
+                               </div>
                                <p className="text-[10px] font-bold text-gray-400">{voter.phone}</p>
                             </div>
                          </div>
@@ -565,7 +602,7 @@ export default function VotersRegistryPage() {
                     <Upload size={24} className="text-gray-300" />
                     <span className="text-sm font-bold">{csvFile ? csvFile.name : "Select CSV Personnel List"}</span>
                  </div>
-                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={e => e.target.files && setCsvFile(e.target.files[0])} />
+                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={e => e.target.files && setCsvFile(e.target.files[0])} />
               </div>
               <button onClick={handleUploadCSV} disabled={isUploading} className="w-full h-12 bg-[#243160] text-white rounded-2xl font-bold shadow-lg shadow-[#243160]/20 disabled:opacity-50">
                  {isUploading ? "Uploading Data..." : "Finalize Import"}
@@ -617,6 +654,8 @@ export default function VotersRegistryPage() {
                       className="w-full h-12 px-4 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-[#101828] focus:border-[#405189] transition-all appearance-none cursor-pointer">
                       <option value="Verified">Verified</option>
                       <option value="Pending">Pending</option>
+                      <option value="Suspicious">Suspicious</option>
+                      <option value="Warning">Warning</option>
                       <option value="Rejected">Rejected</option>
                       <option value="Ineligible">Ineligible</option>
                    </select>

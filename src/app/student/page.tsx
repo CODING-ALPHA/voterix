@@ -224,18 +224,26 @@ function DashboardContent() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-20">
-            {ballot?.positions?.map((pos: any, idx: number) => (
-              <div key={idx} className="text-base font-normal text-black">{pos.title}</div>
-            )) || (
-                <div className="text-gray-400">Loading positions...</div>
-              )}
+            {ballot?.positions?.length > 0 ? (
+              ballot.positions.map((pos: any, idx: number) => (
+                <div key={idx} className="text-base font-normal text-black">{pos.title}</div>
+              ))
+            ) : ballot?.status === "pending" || meta?.status === "pending" ? (
+              <div className="text-gray-400 italic font-medium">Positions will appear here once the election officially starts.</div>
+            ) : (
+              <div className="text-gray-400">Loading positions...</div>
+            )}
           </div>
         </div>
 
         <div className="pt-10 flex justify-center md:justify-start">
           <Link
-            href={meta?.voter_status?.has_voted ? `/student/preview?election=${electionId}` : `/student/election?election=${electionId}`}
-            className="text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14"
+            href={
+              meta?.voter_status?.has_voted ? `/student/preview?election=${electionId}` : 
+              meta?.status === "pending" ? "#" :
+              `/student/election?election=${electionId}`
+            }
+            className={`text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14 ${meta?.status === "pending" && !meta?.voter_status?.has_voted ? 'opacity-50 cursor-not-allowed' : ''}`}
             style={{
               borderRadius: '21px',
               border: '1.81px solid #676767',
@@ -244,7 +252,9 @@ function DashboardContent() {
               gap: '14.476px'
             }}
           >
-            {meta?.voter_status?.has_voted ? "View Live Results" : "Proceed to Vote"}
+            {meta?.voter_status?.has_voted ? "View Live Results" : 
+             meta?.status === "pending" ? "Waiting for Start" :
+             "Proceed to Vote"}
           </Link>
         </div>
       </div>

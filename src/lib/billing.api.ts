@@ -14,6 +14,8 @@ export interface AssociationBilling {
   publik_id: string;
   profile_picture?: string;
   price_per_vote: number;
+  base_fee: number;
+  is_setup_fee_paid?: boolean;
   total_elections: number;
   total_votes: number;
 }
@@ -23,8 +25,10 @@ export interface Invoice {
   invoice_number: string;
   association_name: string;
   election_title: string;
+  election_publik_id: string;
   total_votes: number;
   price_per_vote: number;
+  base_fee: number;
   total_amount: number;
   status: 'pending' | 'paid';
   date: string;
@@ -43,10 +47,14 @@ export function getAssociationBillingDetail(associationUid: string) {
   return apiFetch<{ status: string; data: AssociationBilling & { invoices: Invoice[] } }>(`/billing/associations/${associationUid}/`);
 }
 
-export function updateAssociationPricing(associationUid: string, pricePerVote: number) {
+export function updateAssociationPricing(associationUid: string, pricePerVote?: number, baseFee?: number, isSetupFeePaid?: boolean) {
   return apiFetch(`/billing/associations/${associationUid}/pricing/`, {
     method: "POST",
-    body: JSON.stringify({ price_per_vote: pricePerVote }),
+    body: JSON.stringify({ 
+      price_per_vote: pricePerVote,
+      base_fee: baseFee,
+      is_setup_fee_paid: isSetupFeePaid
+    }),
   });
 }
 
@@ -63,5 +71,11 @@ export function updateInvoiceStatus(invoiceUid: string, status: 'pending' | 'pai
   return apiFetch(`/billing/invoices/${invoiceUid}/`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
+  });
+}
+
+export function deleteAssociation(associationUid: string) {
+  return apiFetch(`/billing/associations/${associationUid}/delete/`, {
+    method: "DELETE",
   });
 }

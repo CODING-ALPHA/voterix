@@ -69,18 +69,21 @@ function VerificationContent() {
       });
 
       if (result.status === "success") {
+        console.log("OTP Request successful, redirecting...");
         // Store name and matric in short-lived cookies for the next step
         document.cookie = `voter_name=${encodeURIComponent(name)}; path=/; max-age=3600; SameSite=Lax`;
         document.cookie = `voter_matric=${encodeURIComponent(matricNo)}; path=/; max-age=3600; SameSite=Lax`;
-        router.push(`/student/verify/otp?email=${email}&matric=${matricNo}&assoc=${assocId}&election=${electionId}`);
+        
+        const otpUrl = `/student/verify/otp?email=${encodeURIComponent(email)}&matric=${encodeURIComponent(matricNo)}&assoc=${encodeURIComponent(assocId)}&election=${encodeURIComponent(electionId || "")}`;
+        router.push(otpUrl);
       } else {
         setMatricError(true);
-        setErrorMessage(
-          formatApiErrorMessage(
+        const errStr = formatApiErrorMessage(
             { message: result.message, errors: result.errors },
-            "You are not eligible to participate in this election"
-          )
-        );
+            "Verification failed"
+          );
+        setErrorMessage(errStr);
+        setAlert({ message: errStr, type: "error" });
       }
     } catch (error) {
       console.error("OTP Authentication error:", error);

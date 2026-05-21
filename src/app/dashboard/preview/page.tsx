@@ -73,7 +73,8 @@ const PieChart = ({ candidates }: { candidates: CandidateRow[] }) => {
                    src={hoveredCandidate.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(hoveredCandidate.name)}`} 
                    alt={hoveredCandidate.name} 
                    fill 
-                   className="object-cover animate-in fade-in zoom-in-95 duration-300"
+                   className="object-contain animate-in fade-in zoom-in-95 duration-300"
+                    style={{ objectFit: "contain" }}
                  />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2">
                     <span className="text-[10px] font-black text-white uppercase tracking-wider">{Math.round(hoveredCandidate.percentage)}%</span>
@@ -403,7 +404,9 @@ function PreviewContent() {
                                src={cand.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cand.name)}`} 
                                alt={cand.name} 
                                fill 
-                               className="object-cover" 
+                    unoptimized
+                               className="object-contain"
+                               style={{ objectFit: "contain" }}
                              />
                           </div>
                           <div className="min-w-0">

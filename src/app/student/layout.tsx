@@ -33,9 +33,22 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     if (queryAssocId) localStorage.setItem("voter_active_assoc", queryAssocId);
 
     // 2. Set active state from URL or LocalStorage
-    setActiveElectionId(queryElectionId || localStorage.getItem("voter_active_election"));
-    setActiveAssocId(queryAssocId || localStorage.getItem("voter_active_assoc"));
-  }, [queryElectionId, queryAssocId]);
+    const eid = queryElectionId || localStorage.getItem("voter_active_election");
+    const aid = queryAssocId || localStorage.getItem("voter_active_assoc");
+    setActiveElectionId(eid);
+    setActiveAssocId(aid);
+
+    // 3. Auth Guard: Check for session token
+    const isAuthPage = pathname.includes("/login") || pathname.includes("/verify");
+    const token = typeof window !== "undefined" ? document.cookie.includes("voter_session_token=") : false;
+
+    if (!isAuthPage && !token) {
+      const params = new URLSearchParams();
+      if (eid) params.set("election", eid);
+      if (aid) params.set("assoc", aid);
+      router.push(`/student/login?${params.toString()}`);
+    }
+  }, [queryElectionId, queryAssocId, pathname, router]);
 
   const handleVoterLogout = () => {
     clearVoterSession();
@@ -65,7 +78,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
     return `${href}?${params.toString()}`;
   };
 
-  const isAuthPage = pathname === "/student/login" || pathname === "/student/verify" || pathname.startsWith("/student/login?");
+  const isAuthPage = pathname.includes("/login") || pathname.includes("/verify");
   
   if (isAuthPage) {
     return <>{children}</>;
@@ -130,7 +143,7 @@ function StudentLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="p-4 space-y-2 border-t border-white/10 mt-auto">
           <button 
             className="w-full h-11 flex items-center gap-3 px-4 rounded-xl font-bold text-white/90 hover:bg-white/5 hover:text-white transition-all duration-200"
-            onClick={() => window.open('mailto:support@voterix.com')}
+            onClick={() => window.open('mailto:support@voterix.com.ng')}
           >
             <Headset size={18} strokeWidth={2} />
             <span className="text-xs uppercase tracking-wide">Contact Support</span>

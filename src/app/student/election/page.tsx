@@ -22,6 +22,7 @@ function ElectionContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [alert, setAlert] = useState<{ message: string; type: "error" | "success" | "warning" | "info" } | null>(null);
+  const [meta, setMeta] = useState<any>(null);
 
   const [hasVoted, setHasVoted] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -34,6 +35,7 @@ function ElectionContent() {
         // 1. Check Status
         const statusRes = await apiFetch<any>(`/election/public/${electionId}/?matric=${encodeURIComponent(matric)}`);
         if (statusRes.status === "success") {
+          setMeta(statusRes.data);
           if (statusRes.data.voter_status?.has_voted) {
             setHasVoted(true);
             return;
@@ -57,6 +59,7 @@ function ElectionContent() {
         }
       } catch (error) {
         console.error("Fetch ballot error:", error);
+        setAlert({ message: formatApiErrorMessage(error, "Unable to load ballot details"), type: "error" });
       } finally {
         setIsLoading(false);
       }
@@ -81,17 +84,18 @@ function ElectionContent() {
     const positionKey = String(position.uid || position.id || position.title);
     const candidateValue = candidate.uid || candidate.id || candidate.name;
 
-    setSelectedCandidates(prev => ({
-      ...prev,
-      [positionKey]: candidateValue
-    }));
+    setSelectedCandidates(prev => {
+      const newSelections = { ...prev };
+      if (newSelections[positionKey] === candidateValue) {
+        delete newSelections[positionKey];
+      } else {
+        newSelections[positionKey] = candidateValue;
+      }
+      return newSelections;
+    });
   };
 
   const handleCastVoteClick = () => {
-    if (Object.keys(selectedCandidates).length === 0) {
-      setAlert({ message: "Please select at least one candidate", type: "warning" });
-      return;
-    }
     setIsPinModalOpen(true);
   };
 
@@ -176,7 +180,7 @@ function ElectionContent() {
     } catch (error) {
       console.error("Cast vote error:", error);
       setIsPinModalOpen(false);
-      setAlert({ message: "An error occurred while casting your vote.", type: "error" });
+      setAlert({ message: formatApiErrorMessage(error, "An error occurred while casting your vote."), type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -186,6 +190,35 @@ function ElectionContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3457B4]"></div>
+      </div>
+    );
+  }
+
+  if (meta?.status === "pending") {
+    return (
+      <div className="bg-[#F8FAFC] min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-10 text-blue-500 shadow-sm">
+           <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg>
+        </div>
+        <h1 className="text-3xl font-black text-[#101828] tracking-tight mb-4 uppercase">Election Not Started</h1>
+        <p className="text-gray-500 font-medium mb-12 max-w-md leading-relaxed">
+          The voting portal for {meta.title} is currently closed. It will open automatically once the election starts.
+        </p>
+        <button
+          onClick={() => router.push(`/student?election=${electionId}`)}
+          className="text-white font-bold text-sm md:text-base uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center hover:opacity-95 w-full md:w-[367px] h-12 md:h-14 px-8"
+          style={{
+            borderRadius: '21px',
+            border: '1.81px solid #676767',
+            background: 'linear-gradient(180deg, #3457B4 0%, #4A496A 100%)',
+            boxShadow: '0 1.81px 3.619px 0 rgba(16, 24, 40, 0.05)',
+            gap: '14.476px'
+          }}
+        >
+          Return to Dashboard
+        </button>
       </div>
     );
   }
@@ -281,7 +314,7 @@ function ElectionContent() {
                   <div
                     key={cIdx}
                     onClick={() => handleSelect(position, candidate)}
-                    className={`relative flex flex-col bg-white rounded-xl p-5 pb-6 cursor-pointer transition-all duration-200 border ${
+                    className={`relative flex flex-col bg-white rounded-xl p-3 pb-4 cursor-pointer transition-all duration-200 border ${
                       isSelected
                         ? "border-[#3457B4] ring-4 ring-[#3457B4]/5 shadow-md -translate-y-1"
                         : "border-gray-100 hover:border-gray-200 hover:shadow-sm"
@@ -301,13 +334,15 @@ function ElectionContent() {
                     </div>
 
                     {/* Candidate Image */}
-                    <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden bg-gray-50 border border-gray-50">
+                    <div className="w-full aspect-square relative rounded-lg overflow-hidden bg-gray-50 border border-gray-50">
                       {candidate.image ? (
                         <Image
                           src={candidate.image}
                           alt={candidate.name}
                           fill
-                          className="object-cover"
+                          unoptimized
+                          className="object-contain"
+                          style={{ objectFit: 'contain' }}
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-200 text-2xl">
@@ -318,7 +353,7 @@ function ElectionContent() {
 
                     {/* Candidate Name */}
                     <div className="w-full text-center mt-4">
-                      <h3 className="font-semibold text-gray-900 text-xs uppercase tracking-tight leading-tight px-2">
+                      <h3 className="font-bold text-gray-900 text-[13px] uppercase tracking-tight leading-tight px-2">
                         {candidate.name}
                       </h3>
                     </div>
@@ -354,6 +389,10 @@ function ElectionContent() {
         onClose={() => setIsPinModalOpen(false)}
         onConfirm={handlePinConfirm}
         isLoading={isSubmitting}
+        description={Object.keys(selectedCandidates).length === 0 
+          ? "You haven't selected any candidates. Are you sure you want to cast a blank ballot?" 
+          : "Enter your 6-digit secure voting PIN to cast your vote."
+        }
       />
       <AlertModal
         isOpen={!!alert}

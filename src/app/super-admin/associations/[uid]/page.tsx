@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getAssociationBillingDetail, updateAssociationPricing, type AssociationBilling, type Invoice } from "@/lib/billing.api";
+import { getAssociationBillingDetail, updateAssociationPricing, deleteAssociation, type AssociationBilling, type Invoice } from "@/lib/billing.api";
+import { deleteElection } from "@/lib/elections.api";
 import { getMediaUrl } from "@/lib/api-client";
 import { 
   ArrowLeft, 
@@ -17,7 +18,8 @@ import {
   Users, 
   X,
   Vote,
-  ArchiveRestore
+  ArchiveRestore,
+  Trash2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,14 +31,16 @@ export default function AssociationDetailPage() {
   const [data, setData] = useState<(AssociationBilling & { invoices: Invoice[] }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditingPrice, setIsEditingPrice] = useState(false);
-  const [editValue, setEditValue] = useState<number>(200);
+  const [editPrice, setEditPrice] = useState<number>(200);
+  const [editBaseFee, setEditBaseFee] = useState<number>(0);
 
   const fetchData = async () => {
     try {
       const res = await getAssociationBillingDetail(uid);
       if (res.status === "success") {
         setData(res.data);
-        setEditValue(res.data.price_per_vote);
+        setEditPrice(res.data.price_per_vote);
+        setEditBaseFee(res.data.base_fee);
       }
     } catch (err) {
       console.error("Failed to fetch association detail:", err);
@@ -51,11 +55,46 @@ export default function AssociationDetailPage() {
 
   const handleUpdatePricing = async () => {
     try {
-      await updateAssociationPricing(uid, editValue);
+      await updateAssociationPricing(uid, editPrice, editBaseFee);
       setIsEditingPrice(false);
       fetchData();
     } catch (err) {
       alert("Failed to update pricing");
+    }
+  };
+
+  const handleToggleSetupFee = async () => {
+    if (!data) return;
+    const newStatus = !data.is_setup_fee_paid;
+    if (!window.confirm(`Mark setup fee as ${newStatus ? 'PAID' : 'UNPAID'}?`)) return;
+    
+    try {
+      await updateAssociationPricing(uid, undefined, undefined, newStatus);
+      fetchData();
+    } catch (err) {
+      alert("Failed to update setup fee status");
+    }
+  };
+
+  const handleDeleteAssociation = async () => {
+    if (!window.confirm(`Are you absolutely sure you want to delete '${data?.name}'? This will permanently remove all elections, voters, and billing records.`)) return;
+    
+    try {
+      await deleteAssociation(uid);
+      router.push("/super-admin/associations");
+    } catch (err) {
+      alert("Failed to delete association");
+    }
+  };
+
+  const handleDeleteElection = async (publikId: string, title: string) => {
+    if (!window.confirm(`Delete election '${title}'? This will also remove its associated invoice.`)) return;
+    
+    try {
+      await deleteElection(publikId);
+      fetchData();
+    } catch (err) {
+      alert("Failed to delete election");
     }
   };
 
@@ -79,17 +118,27 @@ export default function AssociationDetailPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Breadcrumb / Back */}
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={() => router.back()}
-          className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 transition-all text-gray-400 hover:text-gray-900 shadow-sm"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Association Registry</h2>
-          <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.back()}
+            className="p-2 hover:bg-white rounded-xl border border-transparent hover:border-gray-100 transition-all text-gray-400 hover:text-gray-900 shadow-sm"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Association Registry</h2>
+            <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+          </div>
         </div>
+
+        <button 
+          onClick={handleDeleteAssociation}
+          className="flex items-center gap-2 h-10 px-6 border border-red-100 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-all shadow-sm"
+        >
+          <Trash2 size={16} />
+          Delete Association
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -106,24 +155,75 @@ export default function AssociationDetailPage() {
             <h3 className="text-xl font-bold text-gray-900">{data.name}</h3>
             <p className="text-sm font-bold text-[#3457B4] uppercase tracking-wider mt-1">{data.publik_id}</p>
             
-            <div className="mt-8 pt-8 border-t border-gray-50 space-y-4">
+            <div className="mt-8 pt-8 border-t border-gray-50 space-y-4 text-left">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Current Rate</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Setup Fee Status</span>
+                <button 
+                  onClick={handleToggleSetupFee}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    data.is_setup_fee_paid 
+                    ? 'bg-green-50 text-green-600 border-green-100 hover:bg-green-600 hover:text-white' 
+                    : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white'
+                  }`}
+                >
+                  {data.is_setup_fee_paid ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+                  {data.is_setup_fee_paid ? 'Paid' : 'Unpaid'}
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Standard Rates</span>
+                  {!isEditingPrice && (
+                    <button onClick={() => setIsEditingPrice(true)} className="text-gray-300 hover:text-[#3457B4] transition-colors"><Edit2 size={14} /></button>
+                  )}
+                </div>
+
                 {isEditingPrice ? (
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="number" 
-                      value={editValue}
-                      onChange={(e) => setEditValue(Number(e.target.value))}
-                      className="w-20 h-8 bg-gray-50 border border-gray-100 rounded-lg px-2 text-xs font-bold focus:ring-1 focus:ring-[#3457B4] outline-none"
-                    />
-                    <button onClick={handleUpdatePricing} className="text-green-600 p-1 hover:bg-green-50 rounded-md"><Save size={16} /></button>
-                    <button onClick={() => setIsEditingPrice(false)} className="text-gray-400 p-1 hover:bg-gray-50 rounded-md"><X size={16} /></button>
+                  <div className="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Price Per Voter (₦)</label>
+                      <input 
+                        type="number" 
+                        value={editPrice}
+                        onChange={(e) => setEditPrice(Number(e.target.value))}
+                        className="w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-bold focus:ring-1 focus:ring-[#3457B4] outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Base Election Fee (₦)</label>
+                      <input 
+                        type="number" 
+                        value={editBaseFee}
+                        onChange={(e) => setEditBaseFee(Number(e.target.value))}
+                        className="w-full h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-bold focus:ring-1 focus:ring-[#3457B4] outline-none"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button 
+                        onClick={handleUpdatePricing} 
+                        className="flex-1 h-9 bg-[#3457B4] text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-500/20"
+                      >
+                        Save Changes
+                      </button>
+                      <button 
+                        onClick={() => setIsEditingPrice(false)} 
+                        className="flex-1 h-9 bg-white border border-gray-200 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-50 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900">₦{data.price_per_vote} / vote</span>
-                    <button onClick={() => setIsEditingPrice(true)} className="text-gray-300 hover:text-[#3457B4] transition-colors"><Edit2 size={14} /></button>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm font-bold">
+                      <span className="text-gray-400 font-medium">Per Voter:</span>
+                      <span className="text-gray-900">₦{data.price_per_vote}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm font-bold">
+                      <span className="text-gray-400 font-medium">Base Fee:</span>
+                      <span className="text-gray-900">₦{data.base_fee}</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -193,9 +293,17 @@ export default function AssociationDetailPage() {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <Link href={`/super-admin/bills/${inv.uid}`} className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
-                        <ExternalLink size={16} />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/super-admin/bills/${inv.uid}`} className="p-2 text-gray-300 hover:text-gray-900 transition-colors">
+                          <ExternalLink size={16} />
+                        </Link>
+                        <button 
+                          onClick={() => handleDeleteElection(inv.election_publik_id, inv.election_title)}
+                          className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

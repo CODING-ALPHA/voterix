@@ -29,14 +29,31 @@ function ElectionMonitoringContent() {
     type: "error" | "success" | "warning" | "info";
   } | null>(null);
 
-  const fetchData = async () => {
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    page_size: 10,
+    total_count: 0,
+    total_pages: 1,
+    has_next: false,
+    has_prev: false,
+  });
+
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchData = async (page = 1) => {
     if (!eid) return;
     setIsLoading(true);
     try {
-      const result = await apiFetch<any>(`/election/${eid}/voters/`);
+      const url = `/election/${eid}/voters/?page=${page}&search=${search}&status=${statusFilter}`;
+      const result = await apiFetch<any>(url);
       if (result.status === "success") {
         setElectionSummary(result.data.summary);
         setVoters(result.data.voters || []);
+        if (result.data.pagination) {
+          setPagination(result.data.pagination);
+          setCurrentPage(result.data.pagination.current_page);
+        }
       }
     } catch (e) {
       setAlert({ message: formatApiErrorMessage(e, "Failed to load election voters."), type: "error" });
@@ -46,37 +63,10 @@ function ElectionMonitoringContent() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [eid]);
+    fetchData(1);
+  }, [eid, search, statusFilter]);
 
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const filteredVoters = useMemo(() => {
-    let result = voters;
-    const term = search.toLowerCase();
-    
-    if (term) {
-      result = result.filter(v => 
-        [v.first_name, v.last_name, v.matric_number, v.email].join(" ").toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter === "voted") result = result.filter(v => v.has_voted);
-    if (statusFilter === "pending") result = result.filter(v => !v.has_voted);
-
-    return result;
-  }, [voters, search, statusFilter]);
-
-  const totalPages = Math.ceil(filteredVoters.length / itemsPerPage);
-  const currentVoters = filteredVoters.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter]);
-
-  const handleRefresh = () => fetchData();
+  const handleRefresh = () => fetchData(currentPage);
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6">
@@ -89,7 +79,7 @@ function ElectionMonitoringContent() {
                 </button>
                 <div className="min-w-0">
                    <h1 className="text-xl md:text-2xl font-black text-[#101828] tracking-tight truncate leading-tight">
-                     {electionSummary?.title || "Election Monitor"}
+                     {electionSummary?.election_title || "Election Monitor"}
                    </h1>
                    <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mt-0.5">
                       Status
@@ -139,7 +129,7 @@ function ElectionMonitoringContent() {
                   try {
                     const res = await apiFetch<any>(`/election/${eid}/generate-pins/`, { method: "POST" });
                     setAlert({ message: res.message || "PINs generated successfully.", type: "success" });
-                    fetchData();
+                    fetchData(currentPage);
                   } catch (e) {
                     setAlert({ message: formatApiErrorMessage(e, "Failed to generate PINs."), type: "error" });
                   }
@@ -190,7 +180,7 @@ function ElectionMonitoringContent() {
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-gray-50">
-                          {currentVoters.map((v, idx) => (
+                          {voters.map((v, idx) => (
                              <tr key={idx} className="group hover:bg-[#F8F9FB] transition-colors">
                                 <td className="px-8 py-4 font-black text-sm text-[#101828] group-hover:text-[#405189]">
                                    {v.first_name} {v.last_name}
@@ -227,7 +217,7 @@ function ElectionMonitoringContent() {
 
                   {/* Card View (Mobile) */}
                   <div className="md:hidden divide-y divide-gray-50">
-                    {currentVoters.map((v, idx) => (
+                    {voters.map((v, idx) => (
                       <div key={idx} className="p-6 space-y-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
@@ -270,7 +260,7 @@ function ElectionMonitoringContent() {
                     ))}
                   </div>
 
-                  {currentVoters.length === 0 && (
+                  {voters.length === 0 && (
                     <div className="py-20 text-center">
                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                           <Search size={24} className="text-gray-300" />
@@ -281,22 +271,22 @@ function ElectionMonitoringContent() {
                </div>
                
                {/* Pagination Footer */}
-                {totalPages > 1 && (
+                {pagination.total_pages > 1 && (
                   <div className="px-6 sm:px-8 py-6 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        Page {currentPage} of {totalPages} ({filteredVoters.length} total)
+                        Page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total)
                      </p>
                      <div className="flex gap-2 w-full sm:w-auto">
                         <button 
-                          disabled={currentPage === 1}
-                          onClick={() => setCurrentPage(p => p - 1)}
+                          disabled={!pagination.has_prev}
+                          onClick={() => fetchData(pagination.current_page - 1)}
                           className="flex-1 sm:flex-none h-10 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
                         >
                            Previous
                         </button>
                         <button 
-                          disabled={currentPage === totalPages}
-                          onClick={() => setCurrentPage(p => p + 1)}
+                          disabled={!pagination.has_next}
+                          onClick={() => fetchData(pagination.current_page + 1)}
                           className="flex-1 sm:flex-none h-10 px-4 border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#405189] hover:bg-[#405189] hover:text-white transition-all disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-[#405189]"
                         >
                            Next
